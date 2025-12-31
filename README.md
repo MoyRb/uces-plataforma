@@ -1,2 +1,2 @@
 # uces-plataforma
-#By DuoMind
+# By DuoMind
