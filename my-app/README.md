@@ -3,7 +3,7 @@
 Stack: Next.js (App Router) + TypeScript + Tailwind + shadcn/ui + Supabase.
 
 ## Configuración
-1. Copia `.env.example` a `.env.local` y completa:
+1. Crea un archivo `.env.local` en `my-app/` con las claves de Supabase y el secreto de hashing de CURP:
 ```
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
