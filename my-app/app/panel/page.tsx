@@ -16,42 +16,19 @@ type Profile = {
   email: string | null;
 };
 
-const modules = [
-  {
-    title: "Laboratorio y talleres",
-    description: "Agenda y seguimiento de prácticas supervisadas con reportes en línea.",
-  },
-  {
-    title: "Deportes y recreación",
-    description: "Calendario de actividades deportivas, inscripciones y control de asistencia.",
-  },
-  {
-    title: "Campos clínicos",
-    description: "Asignación de rotaciones y seguimiento de evaluaciones clínicas.",
-  },
-  {
-    title: "Tecnología y soporte informático",
-    description: "Mesa de ayuda, reportes de incidentes y estado de tickets.",
-  },
-  {
-    title: "Biblioteca y recursos académicos",
-    description: "Préstamos, reservaciones de salas y acceso a recursos digitales.",
-  },
-  {
-    title: "Vinculación",
-    description: "Convenios, bolsa de prácticas y seguimiento de postulaciones.",
-  },
-  {
-    title: "Auxiliar técnico académico",
-    description: "Soporte a docentes, materiales y coordinación de evaluaciones.",
-  },
-];
+type Module = {
+  id: string;
+  name: string;
+  description: string | null;
+};
 
 export default function PanelPage() {
   const router = useRouter();
   const supabase = useMemo(() => supabaseBrowser(), []);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [modules, setModules] = useState<Module[]>([]);
+  const [loadingModules, setLoadingModules] = useState(true);
   const [checkingSession, setCheckingSession] = useState(true);
 
   useEffect(() => {
@@ -84,6 +61,22 @@ export default function PanelPage() {
     };
 
     loadProfile();
+  }, [session, supabase]);
+
+  useEffect(() => {
+    if (!session) return;
+
+    const loadModules = async () => {
+      const { data, error } = await supabase.from("modules").select("id, name, description").order("name");
+
+      if (!error && data) {
+        setModules(data as Module[]);
+      }
+
+      setLoadingModules(false);
+    };
+
+    loadModules();
   }, [session, supabase]);
 
   if (checkingSession) {
@@ -134,19 +127,29 @@ export default function PanelPage() {
             <p className="text-sm font-medium text-blue-700">Rol activo: {effectiveRole}</p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {modules.map((module) => (
-              <Card key={module.title} className="border-slate-100 shadow-md">
-                <CardHeader>
-                  <CardTitle className="text-slate-900">{module.title}</CardTitle>
-                  <CardDescription className="text-slate-700">{module.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button className="w-full" variant="outline">
-                    Entrar
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+            {loadingModules ? (
+              <div className="col-span-full rounded-xl border border-dashed border-slate-200 bg-white p-6 text-center text-slate-600">
+                Cargando módulos...
+              </div>
+            ) : modules.length === 0 ? (
+              <div className="col-span-full rounded-xl border border-dashed border-slate-200 bg-white p-6 text-center text-slate-600">
+                No hay módulos disponibles por el momento.
+              </div>
+            ) : (
+              modules.map((module) => (
+                <Card key={module.id} className="border-slate-100 shadow-md">
+                  <CardHeader>
+                    <CardTitle className="text-slate-900">{module.name}</CardTitle>
+                    <CardDescription className="text-slate-700">{module.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button asChild className="w-full" variant="outline">
+                      <Link href={`/modulos/${module.id}`}>Entrar</Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
         </section>
       </div>
