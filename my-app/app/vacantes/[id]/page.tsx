@@ -8,7 +8,7 @@ import { supabaseServer } from "@/lib/supabaseServer";
 import { ApplyButton } from "./postular";
 
 type VacancyPageProps = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
 type VacancyDetail = {
@@ -25,12 +25,13 @@ type VacancyDetail = {
 };
 
 export default async function VacancyDetailPage({ params }: VacancyPageProps) {
+  const { id } = await params;
   const supabase = supabaseServer();
 
   const { data: vacancy } = await supabase
     .from("vacancies")
     .select("id, title, description, requirements, schedule, location, status, module_id, modules(name), assessments(id, duration_minutes)")
-    .eq("id", params.id)
+    .eq("id", id)
     .maybeSingle<VacancyDetail>();
 
   if (!vacancy) {
