@@ -27,15 +27,9 @@ export async function PATCH(request: Request, { params }: Params) {
   const admin = await requireAdmin(request);
   if (admin instanceof NextResponse) return admin;
 
-  const body = await request.json().catch(() => null) as Record<string, unknown> | null;
-  const vacancyId = toNullableText(body?.vacancy_id);
-
-  if (!vacancyId) {
-    return NextResponse.json({ error: "vacancy_id es obligatorio" }, { status: 400 });
-  }
+  const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
 
   const payload = {
-    vacancy_id: vacancyId,
     title: toNullableText(body?.title),
     duration_minutes: toOptionalNumber(body?.duration_minutes) ?? 30,
   };
@@ -53,6 +47,19 @@ export async function DELETE(request: Request, { params }: Params) {
   const { id } = await params;
   const admin = await requireAdmin(request);
   if (admin instanceof NextResponse) return admin;
+
+  const { count, error: attemptsError } = await admin.supabase
+    .from("attempts")
+    .select("id", { head: true, count: "exact" })
+    .eq("assessment_id", id);
+
+  if (attemptsError) {
+    return NextResponse.json({ error: "No se pudo validar intentos asociados" }, { status: 400 });
+  }
+
+  if ((count ?? 0) > 0) {
+    return NextResponse.json({ error: "No se puede eliminar porque existen intentos" }, { status: 409 });
+  }
 
   const { error } = await admin.supabase.from("assessments").delete().eq("id", id);
 
