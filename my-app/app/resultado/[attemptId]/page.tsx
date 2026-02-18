@@ -3,9 +3,8 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatBytes } from "@/lib/format";
 import { supabaseServer } from "@/lib/supabaseServer";
-
-import { formatBytes } from "../evaluacion/[attemptId]/utils";
 
 type ResultPageProps = {
   params: Promise<{ attemptId: string }>;
