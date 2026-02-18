@@ -5,12 +5,11 @@ import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { resolveRole } from "@/lib/auth";
+import { getRoleForUser } from "@/lib/auth";
 import { supabaseBrowser } from "@/lib/supabaseClient";
 
 type Profile = {
   name: string | null;
-  role: string | null;
   email: string | null;
 };
 
@@ -29,20 +28,18 @@ export default function AdminPage() {
 
       const { data: profileData } = await supabase
         .from("profiles")
-        .select("name, role, email")
+        .select("name, email")
         .eq("user_id", data.session.user.id)
         .maybeSingle();
 
       const mergedProfile: Profile = profileData ?? {
         name: null,
-        role: null,
         email: data.session.user.email ?? null,
       };
 
-      const effectiveRole = resolveRole(mergedProfile.role, mergedProfile.email);
+      const role = await getRoleForUser(supabase, data.session.user.id);
 
-      if (effectiveRole !== "admin" && effectiveRole !== "reviewer") {
-        // TEMP: replace with roles from profiles table when available
+      if (role !== "admin") {
         router.replace("/panel");
         return;
       }
@@ -67,7 +64,7 @@ export default function AdminPage() {
           <p className="text-sm font-semibold text-blue-700">Panel administrativo</p>
           <h1 className="text-2xl font-bold text-slate-900">Gestión y revisión</h1>
           <p className="text-sm text-slate-600">
-            Acceso restringido para administradores y revisores. Gestiona contenidos, revisa evaluaciones y consulta KPIs.
+            Acceso restringido para administradores. Gestiona contenidos, revisa evaluaciones y consulta KPIs.
           </p>
           <div className="mt-2 flex items-center gap-3 text-sm text-slate-700">
             <span className="rounded-full bg-blue-50 px-3 py-1 font-semibold text-blue-700">{profile?.email}</span>
