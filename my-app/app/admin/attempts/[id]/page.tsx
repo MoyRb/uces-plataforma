@@ -103,6 +103,7 @@ export default function AttemptDetailAdminPage() {
   const [attempt, setAttempt] = useState<AttemptDetail | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [warningMessage, setWarningMessage] = useState("");
   const [notes, setNotes] = useState("");
   const [editableDecision, setEditableDecision] = useState<Decision | "">("");
 
@@ -118,7 +119,7 @@ export default function AttemptDetailAdminPage() {
       },
     });
 
-    const json = (await response.json().catch(() => ({}))) as T & { error?: string };
+    const json = (await response.json().catch(() => ({}))) as T & { error?: string; warning?: string };
     if (!response.ok) {
       throw new Error(json.error ?? "Error inesperado");
     }
@@ -141,13 +142,17 @@ export default function AttemptDetailAdminPage() {
 
     setSaving(true);
     setErrorMessage("");
+    setWarningMessage("");
     setSuccessMessage("");
     try {
-      await callAdmin<{ data: AttemptDetail }>(`/api/admin/attempts/${params.id}`, {
+      const result = await callAdmin<{ data: AttemptDetail; warning?: string }>(`/api/admin/attempts/${params.id}`, {
         method: "PATCH",
         body: JSON.stringify({ status, notes, decision }),
       });
       await loadAttempt();
+      if (result.warning) {
+        setWarningMessage(result.warning);
+      }
       setSuccessMessage("Cambios guardados correctamente.");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "No se pudo actualizar el intento");
@@ -199,6 +204,7 @@ export default function AttemptDetailAdminPage() {
 
         {errorMessage ? <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">{errorMessage}</div> : null}
         {successMessage ? <div className="rounded border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">{successMessage}</div> : null}
+        {warningMessage ? <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">{warningMessage}</div> : null}
 
         {!attempt ? (
           <Card>
