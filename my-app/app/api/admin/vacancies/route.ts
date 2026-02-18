@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 
-import { requireAdmin, toNullableText, toOptionalBoolean } from "../utils";
+import { requireAdmin, toNullableText } from "../utils";
+
+const normalizeStatus = (value: unknown): "open" | "closed" | "draft" => {
+  if (value === "closed" || value === "draft") return value;
+  return "open";
+};
 
 export async function GET(request: Request) {
   const admin = await requireAdmin(request);
@@ -25,23 +30,38 @@ export async function POST(request: Request) {
 
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
 
-  const moduleId = toNullableText(body?.module_id);
   const title = toNullableText(body?.title);
-  if (!moduleId || !title) return NextResponse.json({ error: "Módulo y título son obligatorios" }, { status: 400 });
+  if (!title) return NextResponse.json({ error: "El título es obligatorio" }, { status: 400 });
 
-  const payload: Record<string, unknown> = { module_id: moduleId, title, description: toNullableText(body?.description), status: toNullableText(body?.status) ?? "open" };
-  const payloadBase = { ...payload };
+  const payload = {
+    module_id: toNullableText(body?.module_id),
+    title,
+    schedule: toNullableText(body?.schedule),
+    location: toNullableText(body?.location),
+    description: toNullableText(body?.description),
+    requirements: toNullableText(body?.requirements),
+    status: normalizeStatus(body?.status),
+  };
 
-  if (body && Object.prototype.hasOwnProperty.call(body, "is_active")) payload.is_active = toOptionalBoolean(body.is_active, true);
-  if (body && Object.prototype.hasOwnProperty.call(body, "deadline")) payload.deadline = toNullableText(body.deadline);
-
-  let response = await admin.supabase.from("vacancies").insert(payload).select("*").single();
-
-  if (response.error && /column/i.test(response.error.message)) {
-    response = await admin.supabase.from("vacancies").insert(payloadBase).select("*").single();
+  const vacancyResponse = await admin.supabase.from("vacancies").insert(payload).select("*").single();
+  if (vacancyResponse.error || !vacancyResponse.data) {
+    return NextResponse.json({ error: vacancyResponse.error?.message || "No se pudo crear la vacante" }, { status: 400 });
   }
 
-  if (response.error) return NextResponse.json({ error: response.error.message || "No se pudo crear la vacante" }, { status: 400 });
+  const assessmentResponse = await admin.supabase
+    .from("assessments")
+    .insert({
+      vacancy_id: vacancyResponse.data.id,
+      title: `Evaluación - ${vacancyResponse.data.title}`,
+      duration_minutes: 30,
+    })
+    .select("*")
+    .single();
 
-  return NextResponse.json({ data: response.data }, { status: 201 });
+  if (assessmentResponse.error) {
+    await admin.supabase.from("vacancies").delete().eq("id", vacancyResponse.data.id);
+    return NextResponse.json({ error: assessmentResponse.error.message || "No se pudo crear la evaluación automática" }, { status: 400 });
+  }
+
+  return NextResponse.json({ data: vacancyResponse.data, assessment: assessmentResponse.data }, { status: 201 });
 }

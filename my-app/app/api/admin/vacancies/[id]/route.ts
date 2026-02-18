@@ -1,8 +1,13 @@
 import { NextResponse } from "next/server";
 
-import { requireAdmin, toNullableText, toOptionalBoolean } from "../../utils";
+import { requireAdmin, toNullableText } from "../../utils";
 
 type Params = { params: Promise<{ id: string }> };
+
+const normalizeStatus = (value: unknown): "open" | "closed" | "draft" => {
+  if (value === "closed" || value === "draft") return value;
+  return "open";
+};
 
 export async function PATCH(request: Request, { params }: Params) {
   const { id } = await params;
@@ -11,21 +16,20 @@ export async function PATCH(request: Request, { params }: Params) {
 
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
 
-  const moduleId = toNullableText(body?.module_id);
   const title = toNullableText(body?.title);
-  if (!moduleId || !title) return NextResponse.json({ error: "Módulo y título son obligatorios" }, { status: 400 });
+  if (!title) return NextResponse.json({ error: "El título es obligatorio" }, { status: 400 });
 
-  const payload: Record<string, unknown> = { module_id: moduleId, title, description: toNullableText(body?.description), status: toNullableText(body?.status) ?? "open" };
-  const payloadBase = { ...payload };
+  const payload = {
+    module_id: toNullableText(body?.module_id),
+    title,
+    schedule: toNullableText(body?.schedule),
+    location: toNullableText(body?.location),
+    description: toNullableText(body?.description),
+    requirements: toNullableText(body?.requirements),
+    status: normalizeStatus(body?.status),
+  };
 
-  if (body && Object.prototype.hasOwnProperty.call(body, "is_active")) payload.is_active = toOptionalBoolean(body.is_active, true);
-  if (body && Object.prototype.hasOwnProperty.call(body, "deadline")) payload.deadline = toNullableText(body.deadline);
-
-  let response = await admin.supabase.from("vacancies").update(payload).eq("id", id).select("*").single();
-
-  if (response.error && /column/i.test(response.error.message)) {
-    response = await admin.supabase.from("vacancies").update(payloadBase).eq("id", id).select("*").single();
-  }
+  const response = await admin.supabase.from("vacancies").update(payload).eq("id", id).select("*").single();
 
   if (response.error) return NextResponse.json({ error: response.error.message || "No se pudo actualizar la vacante" }, { status: 400 });
 
@@ -36,6 +40,31 @@ export async function DELETE(request: Request, { params }: Params) {
   const { id } = await params;
   const admin = await requireAdmin(request);
   if (admin instanceof NextResponse) return admin;
+
+  const { data: assessments, error: assessmentsError } = await admin.supabase.from("assessments").select("id").eq("vacancy_id", id);
+  if (assessmentsError) {
+    return NextResponse.json({ error: "No se pudo validar la evaluación asociada" }, { status: 400 });
+  }
+
+  const assessmentIds = (assessments ?? []).map((assessment) => assessment.id);
+
+  if (assessmentIds.length > 0) {
+    const { count, error: attemptsError } = await admin.supabase
+      .from("attempts")
+      .select("id", { head: true, count: "exact" })
+      .in("assessment_id", assessmentIds);
+
+    if (attemptsError) {
+      return NextResponse.json({ error: "No se pudo validar intentos asociados" }, { status: 400 });
+    }
+
+    if ((count ?? 0) > 0) {
+      return NextResponse.json(
+        { error: "No se puede eliminar: existen intentos registrados. Puedes cerrar la vacante o cambiar status." },
+        { status: 409 },
+      );
+    }
+  }
 
   const { error } = await admin.supabase.from("vacancies").delete().eq("id", id);
   if (error) return NextResponse.json({ error: error.message || "No se pudo eliminar la vacante" }, { status: 400 });
