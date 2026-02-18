@@ -7,7 +7,7 @@ import type { Session } from "@supabase/supabase-js";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getRoleForUser } from "@/lib/auth";
+import { getRoleForSession } from "@/lib/auth";
 import { supabaseBrowser } from "@/lib/supabaseClient";
 
 type Profile = {
@@ -68,7 +68,7 @@ export default function PanelPage() {
     if (!session) return;
 
     const loadRole = async () => {
-      const role = await getRoleForUser(supabase, session.user.id);
+      const role = await getRoleForSession(supabase);
       setUserRole(role);
     };
 

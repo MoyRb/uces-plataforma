@@ -50,7 +50,10 @@ export default async function ResultPage({ params }: ResultPageProps) {
   }
 
   const evidence = attempt.evidence_uploads?.[0];
-  const evidenceUrl = evidence ? supabase.storage.from("evidences").getPublicUrl(evidence.path).data.publicUrl : null;
+  const { data: signedEvidence } = evidence
+    ? await supabase.storage.from("evidences").createSignedUrl(evidence.path, 60 * 60)
+    : { data: null };
+  const evidenceUrl = signedEvidence?.signedUrl ?? null;
 
   return (
     <main className="min-h-screen bg-slate-50">
