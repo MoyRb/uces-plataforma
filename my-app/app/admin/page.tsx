@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getRoleForUser } from "@/lib/auth";
+import { getRoleForSession } from "@/lib/auth";
 import { supabaseBrowser } from "@/lib/supabaseClient";
 
 type Module = { id: string; name: string; description: string | null; is_active?: boolean; sort_order?: number | null };
@@ -103,7 +103,7 @@ export default function AdminPage() {
         return;
       }
 
-      const role = await getRoleForUser(supabase, data.session.user.id);
+      const role = await getRoleForSession(supabase);
       if (role !== "admin") {
         router.replace("/panel");
         return;

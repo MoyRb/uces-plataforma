@@ -20,14 +20,14 @@ export async function GET(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Intento no encontrado" }, { status: 404 });
   }
 
-  const evidenceWithUrl = (data.evidence_uploads ?? []).map((item: { bucket: string | null; path: string }) => {
+  const evidenceWithUrl = await Promise.all((data.evidence_uploads ?? []).map(async (item: { bucket: string | null; path: string }) => {
     const bucket = item.bucket ?? "evidences";
-    const publicUrl = admin.supabase.storage.from(bucket).getPublicUrl(item.path).data.publicUrl;
+    const { data: signedData } = await admin.supabase.storage.from(bucket).createSignedUrl(item.path, 60 * 60);
     return {
       ...item,
-      publicUrl,
+      signedUrl: signedData?.signedUrl ?? null,
     };
-  });
+  }));
 
   return NextResponse.json({
     data: {

@@ -1,3 +1,4 @@
+import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
 import { supabaseServer } from "@/lib/supabaseServer";
@@ -6,6 +7,9 @@ type AdminContext = {
   supabase: ReturnType<typeof supabaseServer>;
   userId: string;
 };
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export async function requireAdmin(request: Request): Promise<AdminContext | NextResponse> {
   const supabase = supabaseServer();
@@ -22,13 +26,25 @@ export async function requireAdmin(request: Request): Promise<AdminContext | Nex
     return NextResponse.json({ error: "Sesión inválida" }, { status: 401 });
   }
 
-  const { data: roleData, error: roleError } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userData.user.id)
-    .maybeSingle<{ role: string }>();
+  if (!supabaseUrl || !anonKey) {
+    return NextResponse.json({ error: "Faltan variables de entorno de Supabase" }, { status: 500 });
+  }
 
-  if (roleError || roleData?.role !== "admin") {
+  const supabaseAsUser = createClient(supabaseUrl, anonKey, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+
+  const { data: roleData, error: roleError } = await supabaseAsUser.rpc("get_my_role");
+
+  if (roleError || roleData !== "admin") {
     return NextResponse.json({ error: "Acceso restringido" }, { status: 403 });
   }
 

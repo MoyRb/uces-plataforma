@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type ProfileRole = "user" | "admin";
 
-export const resolveRole = (role: string | null | undefined) => {
+export const resolveRole = (role: string | null | undefined): ProfileRole => {
   if (role === "admin" || role === "user") {
     return role;
   }
@@ -10,16 +10,12 @@ export const resolveRole = (role: string | null | undefined) => {
   return "user";
 };
 
-export const getRoleForUser = async (supabase: SupabaseClient, userId: string): Promise<ProfileRole> => {
-  const { data, error } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .maybeSingle();
+export const getRoleForSession = async (supabase: SupabaseClient): Promise<ProfileRole> => {
+  const { data, error } = await supabase.rpc("get_my_role");
 
   if (error) {
     return "user";
   }
 
-  return resolveRole(data?.role);
+  return resolveRole(typeof data === "string" ? data : null);
 };
