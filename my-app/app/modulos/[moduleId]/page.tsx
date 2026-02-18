@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { supabaseServer } from "@/lib/supabaseServer";
 
 type ModulePageProps = {
-  params: { moduleId: string };
+  params: Promise<{ moduleId: string }>;
 };
 
 type Vacancy = {
@@ -24,14 +24,15 @@ type Module = {
 };
 
 export default async function ModuleVacanciesPage({ params }: ModulePageProps) {
+  const { moduleId } = await params;
   const supabase = supabaseServer();
 
   const [{ data: module, error: moduleError }, { data: vacanciesData }] = await Promise.all([
-    supabase.from("modules").select("id, name, description").eq("id", params.moduleId).maybeSingle<Module>(),
+    supabase.from("modules").select("id, name, description").eq("id", moduleId).maybeSingle<Module>(),
     supabase
       .from("vacancies")
       .select("id, title, schedule, location, status")
-      .eq("module_id", params.moduleId)
+      .eq("module_id", moduleId)
       .order("title"),
   ]);
 
