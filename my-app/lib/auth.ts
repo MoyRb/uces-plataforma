@@ -1,14 +1,25 @@
-export type ProfileRole = "user" | "admin" | "reviewer";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
-export const resolveRole = (role: string | null | undefined, email?: string | null) => {
-  if (role === "admin" || role === "reviewer") {
+export type ProfileRole = "user" | "admin";
+
+export const resolveRole = (role: string | null | undefined) => {
+  if (role === "admin" || role === "user") {
     return role;
   }
 
-  if (email && email.endsWith("@uces.mx")) {
-    // TEMP: replace with roles from profiles table when available
-    return "admin" satisfies ProfileRole;
+  return "user";
+};
+
+export const getRoleForUser = async (supabase: SupabaseClient, userId: string): Promise<ProfileRole> => {
+  const { data, error } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    return "user";
   }
 
-  return (role as ProfileRole) ?? "user";
+  return resolveRole(data?.role);
 };

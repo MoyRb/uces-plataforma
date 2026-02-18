@@ -24,3 +24,13 @@ Los archivos en `/supabase` incluyen `schema.sql`, `seed.sql` y `rls.sql` para c
 
 ## Estado actual
 Se añadió la página principal con llamadas a login/registro y utilidades base (clientes Supabase, hashing de CURP). Las vistas completas de paneles y evaluaciones se construirán en siguientes iteraciones.
+
+## Cómo hacer un usuario admin
+1. Abre **Supabase Dashboard -> Authentication -> Users** y copia el `UUID` del usuario en la columna **ID**.
+2. Ve a **SQL Editor** y ejecuta:
+```sql
+insert into public.user_roles(user_id, role)
+values ('<uuid>', 'admin')
+on conflict (user_id) do update set role = excluded.role;
+```
+3. Si el usuario ya tenía sesión iniciada, cierra sesión y vuelve a entrar para refrescar permisos.

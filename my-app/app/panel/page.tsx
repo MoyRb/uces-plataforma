@@ -7,12 +7,11 @@ import type { Session } from "@supabase/supabase-js";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { resolveRole } from "@/lib/auth";
+import { getRoleForUser } from "@/lib/auth";
 import { supabaseBrowser } from "@/lib/supabaseClient";
 
 type Profile = {
   name: string | null;
-  role: string | null;
   email: string | null;
 };
 
@@ -30,6 +29,7 @@ export default function PanelPage() {
   const [modules, setModules] = useState<Module[]>([]);
   const [loadingModules, setLoadingModules] = useState(true);
   const [checkingSession, setCheckingSession] = useState(true);
+  const [userRole, setUserRole] = useState<"user" | "admin">("user");
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -49,18 +49,30 @@ export default function PanelPage() {
     const loadProfile = async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("name, role, email")
+        .select("name, email")
         .eq("user_id", session.user.id)
         .maybeSingle();
 
       if (!error && data) {
         setProfile(data as Profile);
       } else {
-        setProfile({ name: null, role: null, email: session.user.email ?? null });
+        setProfile({ name: null, email: session.user.email ?? null });
       }
     };
 
     loadProfile();
+  }, [session, supabase]);
+
+
+  useEffect(() => {
+    if (!session) return;
+
+    const loadRole = async () => {
+      const role = await getRoleForUser(supabase, session.user.id);
+      setUserRole(role);
+    };
+
+    loadRole();
   }, [session, supabase]);
 
   useEffect(() => {
@@ -87,8 +99,7 @@ export default function PanelPage() {
     );
   }
 
-  const effectiveRole = resolveRole(profile?.role, session?.user.email);
-  const isAdmin = effectiveRole === "admin" || effectiveRole === "reviewer";
+  const isAdmin = userRole === "admin";
   const userLabel = profile?.name || profile?.email || session?.user.email;
 
   return (
@@ -124,7 +135,7 @@ export default function PanelPage() {
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-slate-900">Módulos disponibles</h2>
-            <p className="text-sm font-medium text-blue-700">Rol activo: {effectiveRole}</p>
+            <p className="text-sm font-medium text-blue-700">Rol activo: {userRole}</p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {loadingModules ? (
