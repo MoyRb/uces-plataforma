@@ -22,7 +22,7 @@ type Vacancy = {
   modules?: { name: string | null } | null;
 };
 type Assessment = { id: string; vacancy_id: string | null; title: string | null; duration_minutes: number | null; vacancies?: { title: string | null } | null };
-type Question = { id: string; prompt: string; options: string[]; correct_option: string | null };
+type Question = { id: string; prompt: string; options: unknown; correct_option: string | null };
 type Attempt = { id: string; status: string | null; application?: { profile?: { email: string | null } | null; vacancy?: { title: string | null } | null } | null };
 
 const tabs = ["modulos", "vacantes", "evaluaciones", "intentos"] as const;
@@ -40,6 +40,32 @@ const emptyVacancyForm = {
 };
 
 const emptyQuestionForm = { id: "", prompt: "", optionsText: "", correct_option: "" };
+
+const normalizeOptions = (raw: unknown): string[] => {
+  if (Array.isArray(raw)) {
+    return raw.filter((value): value is string => typeof value === "string");
+  }
+
+  if (typeof raw === "string") {
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.filter((value): value is string => typeof value === "string");
+      }
+    } catch {
+      // fall through and use raw string
+    }
+    return [raw];
+  }
+
+  if (raw && typeof raw === "object") {
+    return Object.values(raw).filter((value): value is string => typeof value === "string");
+  }
+
+  return [];
+};
+
+const parseOptionsInput = (text: string): string[] => text.split(/[\n,]/).map((option) => option.trim()).filter(Boolean);
 
 export default function AdminPage() {
   const router = useRouter();
@@ -110,7 +136,7 @@ export default function AdminPage() {
   const loadAssessmentDetail = async (assessmentId: string) => {
     if (!assessmentId) return;
     const result = await callAdmin<{ data: Question[] }>(`/api/admin/assessments/${assessmentId}/questions`);
-    setAssessmentQuestions(result.data ?? []);
+    setAssessmentQuestions((result.data ?? []).map((question) => ({ ...question, options: normalizeOptions(question.options) })));
   };
 
   const loadAttempts = async () => {
@@ -412,7 +438,7 @@ export default function AdminPage() {
                   <textarea className="rounded border p-2" placeholder="Pregunta" value={questionForm.prompt} onChange={(e) => setQuestionForm((s) => ({ ...s, prompt: e.target.value }))} />
                   <textarea
                     className="rounded border p-2"
-                    placeholder="Opciones (una por línea)"
+                    placeholder="Opciones (separadas por coma)"
                     value={questionForm.optionsText}
                     onChange={(e) => setQuestionForm((s) => ({ ...s, optionsText: e.target.value }))}
                   />
@@ -426,7 +452,7 @@ export default function AdminPage() {
                         if (!selectedAssessmentId) return;
                         const payload = {
                           prompt: questionForm.prompt,
-                          options: questionForm.optionsText.split("\n").map((line) => line.trim()).filter(Boolean),
+                          options: parseOptionsInput(questionForm.optionsText),
                           correct_option: questionForm.correct_option || null,
                         };
                         if (questionForm.id) await callAdmin(`/api/admin/questions/${questionForm.id}`, { method: "PATCH", body: JSON.stringify(payload) });
@@ -445,7 +471,7 @@ export default function AdminPage() {
                     <div key={question.id} className="flex items-center justify-between rounded border p-2">
                       <div>
                         <p className="text-sm font-medium">{question.prompt}</p>
-                        <p className="text-xs text-slate-500">Opciones: {(question.options ?? []).join(", ")}</p>
+                        <p className="text-xs text-slate-500">Opciones: {normalizeOptions(question.options).join(", ")}</p>
                       </div>
                       <div className="flex gap-2">
                         <Button
@@ -454,7 +480,7 @@ export default function AdminPage() {
                             setQuestionForm({
                               id: question.id,
                               prompt: question.prompt,
-                              optionsText: (question.options ?? []).join("\n"),
+                              optionsText: normalizeOptions(question.options).join(", "),
                               correct_option: question.correct_option ?? "",
                             })
                           }
