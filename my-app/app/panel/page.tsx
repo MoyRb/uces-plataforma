@@ -115,7 +115,9 @@ export default function PanelPage() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Button variant="outline">Mi perfil</Button>
+              <Button asChild variant="outline">
+                <Link href="/perfil">Mi perfil</Link>
+              </Button>
               {isAdmin ? (
                 <Button asChild variant="secondary">
                   <Link href="/admin">Panel Administrativo</Link>
