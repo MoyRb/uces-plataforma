@@ -8,7 +8,7 @@ import { supabaseServer } from "@/lib/supabaseServer";
 import { formatBytes } from "../evaluacion/[attemptId]/utils";
 
 type ResultPageProps = {
-  params: { attemptId: string };
+  params: Promise<{ attemptId: string }>;
 };
 
 type EvidenceUpload = {
@@ -27,12 +27,13 @@ type AttemptResult = {
 };
 
 export default async function ResultPage({ params }: ResultPageProps) {
+  const { attemptId } = await params;
   const supabase = supabaseServer();
 
   const { data: attempt } = await supabase
     .from("attempts")
     .select("id, theory_score, submitted_at, status, evidence_uploads(path, mime_type, size, created_at)")
-    .eq("id", params.attemptId)
+    .eq("id", attemptId)
     .maybeSingle<AttemptResult>();
 
   if (!attempt) {
