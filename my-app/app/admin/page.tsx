@@ -519,7 +519,12 @@ export default function AdminPage() {
                     <p className="font-medium">{attempt.application?.vacancy?.title ?? "Vacante"}</p>
                     <p className="text-xs text-slate-600">{attempt.application?.profile?.email ?? "Sin email"}</p>
                   </div>
-                  <Badge variant="secondary">{attempt.status ?? "-"}</Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary">{attempt.status ?? "-"}</Badge>
+                    <Button variant="outline" onClick={() => router.push(`/admin/attempts/${attempt.id}`)}>
+                      Ver
+                    </Button>
+                  </div>
                 </div>
               ))}
             </CardContent>

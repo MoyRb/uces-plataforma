@@ -74,7 +74,7 @@ export const toOptionalNumber = (value: unknown) => {
 export const normalizedAttemptStatus = (value: unknown) => {
   if (typeof value !== "string") return null;
   const normalized = value.toUpperCase();
-  if (["IN_PROGRESS", "SUBMITTED", "UNDER_REVIEW", "COMPLETED", "REVIEWED"].includes(normalized)) {
+  if (["IN_PROGRESS", "SUBMITTED", "UNDER_REVIEW", "COMPLETED", "REVIEWED", "APPROVED", "REJECTED"].includes(normalized)) {
     return normalized === "REVIEWED" ? "COMPLETED" : normalized;
   }
   return null;
