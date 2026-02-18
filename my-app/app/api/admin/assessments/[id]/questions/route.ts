@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 
 import { requireAdmin, toNullableText } from "../../../utils";
 
-type Params = { params: { id: string } };
+type Params = { params: Promise<{ id: string }> };
 
 type QuestionType = "multiple_choice" | "open_text";
 
 const normalizeType = (value: unknown): QuestionType => (value === "open_text" ? "open_text" : "multiple_choice");
 
 export async function POST(request: Request, { params }: Params) {
+  const { id } = await params;
   const admin = await requireAdmin(request);
   if (admin instanceof NextResponse) return admin;
 
@@ -25,7 +26,7 @@ export async function POST(request: Request, { params }: Params) {
     : (body?.options && typeof body.options === "object" ? body.options : { A: "", B: "", C: "", D: "" });
 
   const payload = {
-    assessment_id: params.id,
+    assessment_id: id,
     prompt,
     options,
     correct_option: questionType === "multiple_choice" ? toNullableText(body?.correct_option) : null,

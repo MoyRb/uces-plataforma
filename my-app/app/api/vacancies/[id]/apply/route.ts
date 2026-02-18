@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 
 import { supabaseServer } from "@/lib/supabaseServer";
 
-export async function POST(request: Request, { params }: { params: { id: string } }) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const supabase = supabaseServer();
+  const { id } = await params;
   const authHeader = request.headers.get("authorization");
   const token = authHeader?.replace("Bearer ", "");
 
@@ -18,7 +19,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
   }
 
   const userId = userData.user.id;
-  const vacancyId = params.id;
+  const vacancyId = id;
 
   const { data: assessment, error: assessmentError } = await supabase
     .from("assessments")

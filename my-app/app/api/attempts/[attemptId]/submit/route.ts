@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 
 import { supabaseServer } from "@/lib/supabaseServer";
 
-export async function POST(request: Request, { params }: { params: { attemptId: string } }) {
+export async function POST(request: Request, { params }: { params: Promise<{ attemptId: string }> }) {
+  const { attemptId } = await params;
   const supabase = supabaseServer();
   const authHeader = request.headers.get("authorization");
   const token = authHeader?.replace("Bearer ", "");
@@ -20,7 +21,7 @@ export async function POST(request: Request, { params }: { params: { attemptId: 
   const { data: attempt } = await supabase
     .from("attempts")
     .select("id, assessment_id, deadline_at, submitted_at, application:applications!inner(user_id)")
-    .eq("id", params.attemptId)
+    .eq("id", attemptId)
     .maybeSingle();
 
   if (!attempt) {
@@ -47,7 +48,7 @@ export async function POST(request: Request, { params }: { params: { attemptId: 
   const { data: answers } = await supabase
     .from("answers")
     .select("question_id, selected_option")
-    .eq("attempt_id", params.attemptId);
+    .eq("attempt_id", attemptId);
 
   const totalQuestions = questions?.length ?? 0;
   let correctAnswers = 0;
@@ -66,7 +67,7 @@ export async function POST(request: Request, { params }: { params: { attemptId: 
   const { error: updateError } = await supabase
     .from("attempts")
     .update({ theory_score: theoryScore, submitted_at: new Date().toISOString(), status: "UNDER_REVIEW" })
-    .eq("id", params.attemptId);
+    .eq("id", attemptId);
 
   if (updateError) {
     return NextResponse.json({ error: "No se pudo enviar tu intento" }, { status: 400 });

@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 
 import { requireAdmin, toNullableText } from "../../utils";
 
-type Params = { params: { id: string } };
+type Params = { params: Promise<{ id: string }> };
 
 type QuestionType = "multiple_choice" | "open_text";
 
 const normalizeType = (value: unknown): QuestionType => (value === "open_text" ? "open_text" : "multiple_choice");
 
 export async function PATCH(request: Request, { params }: Params) {
+  const { id } = await params;
   const admin = await requireAdmin(request);
   if (admin instanceof NextResponse) return admin;
 
@@ -30,7 +31,7 @@ export async function PATCH(request: Request, { params }: Params) {
     correct_option: questionType === "multiple_choice" ? toNullableText(body?.correct_option) : null,
   };
 
-  const { data, error } = await admin.supabase.from("questions").update(payload).eq("id", params.id).select("*").single();
+  const { data, error } = await admin.supabase.from("questions").update(payload).eq("id", id).select("*").single();
 
   if (error) {
     return NextResponse.json({ error: error.message || "No se pudo actualizar la pregunta" }, { status: 400 });
@@ -40,10 +41,11 @@ export async function PATCH(request: Request, { params }: Params) {
 }
 
 export async function DELETE(request: Request, { params }: Params) {
+  const { id } = await params;
   const admin = await requireAdmin(request);
   if (admin instanceof NextResponse) return admin;
 
-  const { error } = await admin.supabase.from("questions").delete().eq("id", params.id);
+  const { error } = await admin.supabase.from("questions").delete().eq("id", id);
 
   if (error) {
     return NextResponse.json({ error: error.message || "No se pudo eliminar la pregunta" }, { status: 400 });
