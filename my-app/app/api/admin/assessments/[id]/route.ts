@@ -2,16 +2,17 @@ import { NextResponse } from "next/server";
 
 import { requireAdmin, toNullableText, toOptionalNumber } from "../../utils";
 
-type Params = { params: { id: string } };
+type Params = { params: Promise<{ id: string }> };
 
 export async function GET(request: Request, { params }: Params) {
+  const { id } = await params;
   const admin = await requireAdmin(request);
   if (admin instanceof NextResponse) return admin;
 
   const { data, error } = await admin.supabase
     .from("assessments")
     .select("id, vacancy_id, title, duration_minutes, questions(id, prompt, options, correct_option)")
-    .eq("id", params.id)
+    .eq("id", id)
     .maybeSingle();
 
   if (error || !data) {
@@ -22,6 +23,7 @@ export async function GET(request: Request, { params }: Params) {
 }
 
 export async function PATCH(request: Request, { params }: Params) {
+  const { id } = await params;
   const admin = await requireAdmin(request);
   if (admin instanceof NextResponse) return admin;
 
@@ -38,7 +40,7 @@ export async function PATCH(request: Request, { params }: Params) {
     duration_minutes: toOptionalNumber(body?.duration_minutes) ?? 30,
   };
 
-  const { data, error } = await admin.supabase.from("assessments").update(payload).eq("id", params.id).select("*").single();
+  const { data, error } = await admin.supabase.from("assessments").update(payload).eq("id", id).select("*").single();
 
   if (error) {
     return NextResponse.json({ error: error.message || "No se pudo actualizar la evaluación" }, { status: 400 });
@@ -48,10 +50,11 @@ export async function PATCH(request: Request, { params }: Params) {
 }
 
 export async function DELETE(request: Request, { params }: Params) {
+  const { id } = await params;
   const admin = await requireAdmin(request);
   if (admin instanceof NextResponse) return admin;
 
-  const { error } = await admin.supabase.from("assessments").delete().eq("id", params.id);
+  const { error } = await admin.supabase.from("assessments").delete().eq("id", id);
 
   if (error) {
     return NextResponse.json({ error: error.message || "No se pudo eliminar la evaluación" }, { status: 400 });

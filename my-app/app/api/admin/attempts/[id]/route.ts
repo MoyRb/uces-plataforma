@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 
 import { normalizedAttemptStatus, requireAdmin, toNullableText, toOptionalNumber } from "../../utils";
 
-type Params = { params: { id: string } };
+type Params = { params: Promise<{ id: string }> };
 
 export async function GET(request: Request, { params }: Params) {
+  const { id } = await params;
   const admin = await requireAdmin(request);
   if (admin instanceof NextResponse) return admin;
 
@@ -13,7 +14,7 @@ export async function GET(request: Request, { params }: Params) {
     .select(
       "id, status, started_at, submitted_at, deadline_at, theory_score, application:applications!inner(id, user_id, vacancy_id, vacancy:vacancies(title), profile:profiles!applications_user_id_fkey(name, email)), answers(id, selected_option, question:questions(id, prompt, options, correct_option)), evidence_uploads(id, bucket, path, mime_type, size, created_at), reviews(id, comments, decision, created_at)"
     )
-    .eq("id", params.id)
+    .eq("id", id)
     .maybeSingle();
 
   if (error || !data) {
@@ -38,6 +39,7 @@ export async function GET(request: Request, { params }: Params) {
 }
 
 export async function PATCH(request: Request, { params }: Params) {
+  const { id } = await params;
   const admin = await requireAdmin(request);
   if (admin instanceof NextResponse) return admin;
 
@@ -55,7 +57,7 @@ export async function PATCH(request: Request, { params }: Params) {
 
   updatePayload.status = requestedStatus ?? "COMPLETED";
 
-  const { error: attemptError } = await admin.supabase.from("attempts").update(updatePayload).eq("id", params.id);
+  const { error: attemptError } = await admin.supabase.from("attempts").update(updatePayload).eq("id", id);
 
   if (attemptError) {
     return NextResponse.json({ error: attemptError.message || "No se pudo actualizar el intento" }, { status: 400 });
@@ -64,13 +66,13 @@ export async function PATCH(request: Request, { params }: Params) {
   const { data: existingReview } = await admin.supabase
     .from("reviews")
     .select("id")
-    .eq("attempt_id", params.id)
+    .eq("attempt_id", id)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle<{ id: string }>();
 
   const reviewPayload = {
-    attempt_id: params.id,
+    attempt_id: id,
     reviewer_id: admin.userId,
     comments: reviewNotes,
     decision: toNullableText(body?.decision) ?? "APPROVED",

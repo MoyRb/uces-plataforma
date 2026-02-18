@@ -7,7 +7,8 @@ type AnswerPayload = {
   selectedOption?: string;
 };
 
-export async function POST(request: Request, { params }: { params: { attemptId: string } }) {
+export async function POST(request: Request, { params }: { params: Promise<{ attemptId: string }> }) {
+  const { attemptId } = await params;
   const supabase = supabaseServer();
   const authHeader = request.headers.get("authorization");
   const token = authHeader?.replace("Bearer ", "");
@@ -31,7 +32,7 @@ export async function POST(request: Request, { params }: { params: { attemptId: 
   const { data: attempt } = await supabase
     .from("attempts")
     .select("id, assessment_id, deadline_at, submitted_at, application:applications!inner(user_id)")
-    .eq("id", params.attemptId)
+    .eq("id", attemptId)
     .maybeSingle();
 
   if (!attempt) {
@@ -57,7 +58,7 @@ export async function POST(request: Request, { params }: { params: { attemptId: 
   }
 
   const { error: saveError } = await supabase.from("answers").upsert({
-    attempt_id: params.attemptId,
+    attempt_id: attemptId,
     question_id: body.questionId,
     selected_option: body.selectedOption,
   });

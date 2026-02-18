@@ -2,18 +2,19 @@ import { NextResponse } from "next/server";
 
 import { requireAdmin } from "../../../utils";
 
-type Params = { params: { id: string } };
+type Params = { params: Promise<{ id: string }> };
 
 export async function GET(request: Request, { params }: Params) {
+  const { id } = await params;
   const admin = await requireAdmin(request);
   if (admin instanceof NextResponse) return admin;
 
   const [{ count: applicationsCount, error: applicationsError }, { count: attemptsCount, error: attemptsError }] = await Promise.all([
-    admin.supabase.from("applications").select("id", { count: "exact", head: true }).eq("vacancy_id", params.id),
+    admin.supabase.from("applications").select("id", { count: "exact", head: true }).eq("vacancy_id", id),
     admin.supabase
       .from("attempts")
       .select("id, applications!inner(vacancy_id)", { count: "exact", head: true })
-      .eq("applications.vacancy_id", params.id),
+      .eq("applications.vacancy_id", id),
   ]);
 
   if (applicationsError || attemptsError) {
