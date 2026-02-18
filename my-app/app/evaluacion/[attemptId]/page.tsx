@@ -7,7 +7,7 @@ import { supabaseServer } from "@/lib/supabaseServer";
 import { EvaluationClient } from "./cliente";
 
 type EvaluationPageProps = {
-  params: { attemptId: string };
+  params: Promise<{ attemptId: string }>;
 };
 
 type Question = {
@@ -49,6 +49,7 @@ type EvidenceUpload = {
 };
 
 export default async function EvaluationPage({ params }: EvaluationPageProps) {
+  const { attemptId } = await params;
   const supabase = supabaseServer();
 
   const [{ data: attempt }, { data: savedAnswers }, { data: evidenceUploads }] = await Promise.all([
@@ -57,13 +58,13 @@ export default async function EvaluationPage({ params }: EvaluationPageProps) {
       .select(
         "id, deadline_at, submitted_at, status, assessment:assessments(id, title, duration_minutes, questions(id, prompt, options), practical_tasks(id, instructions, expected_output))"
       )
-      .eq("id", params.attemptId)
+      .eq("id", attemptId)
       .maybeSingle<AttemptRecord>(),
-    supabase.from("answers").select("question_id, selected_option").eq("attempt_id", params.attemptId),
+    supabase.from("answers").select("question_id, selected_option").eq("attempt_id", attemptId),
     supabase
       .from("evidence_uploads")
       .select("path, mime_type, size, created_at")
-      .eq("attempt_id", params.attemptId)
+      .eq("attempt_id", attemptId)
       .order("created_at", { ascending: false }),
   ]);
 
