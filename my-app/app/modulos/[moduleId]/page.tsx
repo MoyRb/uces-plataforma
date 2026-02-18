@@ -88,8 +88,8 @@ export default async function ModuleVacanciesPage({ params }: ModulePageProps) {
                       </Badge>
                     </CardTitle>
                     <CardDescription className="space-y-1 text-slate-700">
-                      <p className="font-medium text-slate-800">Horario: {vacancy.schedule || "Por definir"}</p>
-                      <p className="text-sm">Ubicación: {vacancy.location || "Por definir"}</p>
+                      <span className="block font-medium text-slate-800">Horario: {vacancy.schedule || "Por definir"}</span>
+                      <span className="block text-sm">Ubicación: {vacancy.location || "Por definir"}</span>
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
