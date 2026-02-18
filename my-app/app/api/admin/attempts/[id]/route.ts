@@ -1,15 +1,34 @@
 import { NextResponse } from "next/server";
 
-import { normalizedAttemptStatus, requireAdmin, toNullableText, toOptionalNumber } from "../../utils";
+import {
+  ALLOWED_ATTEMPT_STATUSES,
+  normalizedAttemptStatus,
+  normalizedDecision,
+  requireAdmin,
+  toNullableText,
+  toOptionalNumber,
+} from "../../utils";
 
 type Params = { params: Promise<{ id: string }> };
 type AdminSession = Exclude<Awaited<ReturnType<typeof requireAdmin>>, NextResponse>;
 
 type SupabaseErrorLike = { code?: string; message?: string } | null;
 
+type DecisionPayload = {
+  decision: "APPROVED" | "REJECTED" | null;
+  notes: string | null;
+  source: "reviews" | "attempts" | "none";
+};
+
 const isMissingReviewsTable = (error: SupabaseErrorLike) => {
   if (!error) return false;
   return error.code === "42P01" || error.code === "PGRST205" || error.message?.toLowerCase().includes("reviews") || false;
+};
+
+const isMissingAttemptsColumn = (error: SupabaseErrorLike, columnName: "decision" | "reviewer_notes") => {
+  if (!error?.message) return false;
+  const message = error.message.toLowerCase();
+  return message.includes("column") && message.includes(columnName);
 };
 
 const withEvidenceSignedUrls = async (
@@ -41,45 +60,79 @@ const withEvidenceSignedUrls = async (
   );
 };
 
-async function getAttemptDetail(request: Request, id: string) {
-  const admin = await requireAdmin(request);
-  if (admin instanceof NextResponse) return admin;
-
+const readDecisionFromReviews = async (admin: AdminSession, attemptId: string): Promise<DecisionPayload | null> => {
   const { data, error } = await admin.supabase
-    .from("attempts")
-    .select(
-      "id, assessment_id, status, started_at, submitted_at, deadline_at, theory_score, application:applications!inner(id, user_id, vacancy_id, vacancy:vacancies(id, title, module_id, module:modules(id, name)), profile:profiles!applications_user_id_fkey(name, email)), answers(*, question:questions(id, prompt, options, correct_option)), evidence_uploads(*), reviews(*)"
-    )
-    .eq("id", id)
-    .maybeSingle<Record<string, unknown>>();
+    .from("reviews")
+    .select("decision, notes, comments")
+    .eq("attempt_id", attemptId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<{ decision?: string | null; notes?: string | null; comments?: string | null }>();
 
-  if (error || !data) {
-    return NextResponse.json({ error: "Intento no encontrado" }, { status: 404 });
+  if (error) {
+    if (isMissingReviewsTable(error)) return null;
+
+    if (error.message?.toLowerCase().includes("notes")) {
+      const { data: fallbackData, error: fallbackError } = await admin.supabase
+        .from("reviews")
+        .select("decision, comments")
+        .eq("attempt_id", attemptId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle<{ decision?: string | null; comments?: string | null }>();
+
+      if (fallbackError) {
+        if (isMissingReviewsTable(fallbackError)) return null;
+        throw fallbackError;
+      }
+
+      return {
+        decision: normalizedDecision(fallbackData?.decision),
+        notes: toNullableText(fallbackData?.comments),
+        source: "reviews",
+      };
+    }
+
+    throw error;
   }
 
-  const evidence = Array.isArray(data.evidence_uploads) ? data.evidence_uploads.filter((item): item is Record<string, unknown> => Boolean(item && typeof item === "object")) : [];
+  return {
+    decision: normalizedDecision(data?.decision),
+    notes: toNullableText(data?.notes ?? data?.comments),
+    source: "reviews",
+  };
+};
 
-  const evidenceWithUrl = await withEvidenceSignedUrls(admin.supabase, evidence);
+const readDecisionFromAttempts = async (admin: AdminSession, attemptId: string): Promise<DecisionPayload | null> => {
+  const { data, error } = await admin.supabase
+    .from("attempts")
+    .select("decision, reviewer_notes")
+    .eq("id", attemptId)
+    .maybeSingle<{ decision?: string | null; reviewer_notes?: string | null }>();
 
-  return NextResponse.json({
-    data: {
-      ...data,
-      evidence_uploads: evidenceWithUrl,
-    },
-  });
-}
+  if (error) {
+    if (isMissingAttemptsColumn(error, "decision") || isMissingAttemptsColumn(error, "reviewer_notes")) return null;
+    throw error;
+  }
 
-export async function GET(request: Request, { params }: Params) {
-  const { id } = await params;
-  return getAttemptDetail(request, id);
-}
+  return {
+    decision: normalizedDecision(data?.decision),
+    notes: toNullableText(data?.reviewer_notes),
+    source: "attempts",
+  };
+};
 
-const upsertReview = async (
-  admin: AdminSession,
-  id: string,
-  notes: string | null,
-  decision: string | null
-) => {
+const readDecisionState = async (admin: AdminSession, attemptId: string): Promise<DecisionPayload> => {
+  const reviewDecision = await readDecisionFromReviews(admin, attemptId);
+  if (reviewDecision) return reviewDecision;
+
+  const attemptDecision = await readDecisionFromAttempts(admin, attemptId);
+  if (attemptDecision) return attemptDecision;
+
+  return { decision: null, notes: null, source: "none" };
+};
+
+const upsertReview = async (admin: AdminSession, id: string, notes: string | null, decision: "APPROVED" | "REJECTED" | null) => {
   const { data: existingReview, error: existingReviewError } = await admin.supabase
     .from("reviews")
     .select("id")
@@ -89,23 +142,28 @@ const upsertReview = async (
     .maybeSingle<{ id: string }>();
 
   if (isMissingReviewsTable(existingReviewError)) {
-    return null;
+    return { usedReviews: false, error: null as SupabaseErrorLike };
   }
 
-  const cleanDecision = toNullableText(decision)?.toUpperCase() ?? null;
   const cleanNotes = toNullableText(notes);
 
-  const writeReview = async (notesColumn: "notes" | "comments") => {
+  const writeReview = async (notesColumn: "notes" | "comments", includeUpdatedAt = true) => {
+    const now = new Date().toISOString();
     const reviewPayload: Record<string, unknown> = {
       attempt_id: id,
       reviewer_id: admin.userId,
-      decision: cleanDecision,
-      created_at: new Date().toISOString(),
+      decision,
     };
 
-    if (cleanNotes !== null) {
-      reviewPayload[notesColumn] = cleanNotes;
+    if (!existingReview) {
+      reviewPayload.created_at = now;
     }
+
+    if (includeUpdatedAt) {
+      reviewPayload.updated_at = now;
+    }
+
+    reviewPayload[notesColumn] = cleanNotes;
 
     return existingReview
       ? admin.supabase.from("reviews").update(reviewPayload).eq("id", existingReview.id)
@@ -118,12 +176,69 @@ const upsertReview = async (
     ({ error: reviewError } = await writeReview("comments"));
   }
 
-  if (reviewError && !isMissingReviewsTable(reviewError)) {
-    return reviewError;
+  if (reviewError?.message?.toLowerCase().includes("updated_at")) {
+    ({ error: reviewError } = await writeReview("notes", false));
   }
 
-  return null;
+  if (reviewError && !isMissingReviewsTable(reviewError)) {
+    return { usedReviews: true, error: reviewError };
+  }
+
+  return { usedReviews: !reviewError, error: null as SupabaseErrorLike };
 };
+
+const persistDecisionAndNotes = async (admin: AdminSession, id: string, notes: string | null, decision: "APPROVED" | "REJECTED" | null) => {
+  const reviewResult = await upsertReview(admin, id, notes, decision);
+  if (reviewResult.error) {
+    return reviewResult.error;
+  }
+
+  if (reviewResult.usedReviews) {
+    return null;
+  }
+
+  const { error } = await admin.supabase.from("attempts").update({ decision, reviewer_notes: notes }).eq("id", id);
+
+  return error;
+};
+
+async function getAttemptDetail(request: Request, id: string) {
+  const admin = await requireAdmin(request);
+  if (admin instanceof NextResponse) return admin;
+
+  const { data, error } = await admin.supabase
+    .from("attempts")
+    .select(
+      "id, assessment_id, status, started_at, submitted_at, deadline_at, theory_score, application:applications!inner(id, user_id, vacancy_id, vacancy:vacancies(id, title, module_id, module:modules(id, name)), profile:profiles!applications_user_id_fkey(name, email)), answers(*, question:questions(id, prompt, options, correct_option)), evidence_uploads(*)"
+    )
+    .eq("id", id)
+    .maybeSingle<Record<string, unknown>>();
+
+  if (error || !data) {
+    return NextResponse.json({ error: "Intento no encontrado" }, { status: 404 });
+  }
+
+  const decisionState = await readDecisionState(admin, id);
+
+  const evidence = Array.isArray(data.evidence_uploads) ? data.evidence_uploads.filter((item): item is Record<string, unknown> => Boolean(item && typeof item === "object")) : [];
+
+  const evidenceWithUrl = await withEvidenceSignedUrls(admin.supabase, evidence);
+
+  return NextResponse.json({
+    data: {
+      ...data,
+      decision: decisionState.decision,
+      reviewer_notes: decisionState.notes,
+      decision_source: decisionState.source,
+      evidence_uploads: evidenceWithUrl,
+    },
+  });
+}
+
+export async function GET(request: Request, { params }: Params) {
+  const { id } = await params;
+  return getAttemptDetail(request, id);
+}
 
 export async function PATCH(request: Request, { params }: Params) {
   const { id } = await params;
@@ -132,13 +247,34 @@ export async function PATCH(request: Request, { params }: Params) {
 
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
 
-  const requestedStatus = normalizedAttemptStatus(body?.status);
+  const rawStatus = body?.status;
+  const requestedStatus = normalizedAttemptStatus(rawStatus);
   const theoryScore = toOptionalNumber(body?.theory_score);
+
+  if (rawStatus !== undefined && !requestedStatus) {
+    return NextResponse.json(
+      { error: `Estado inválido. Estados permitidos: ${ALLOWED_ATTEMPT_STATUSES.join(", ")}` },
+      { status: 400 }
+    );
+  }
+
+  const rawDecision = body?.decision;
+  const requestedDecision = rawDecision === null ? null : normalizedDecision(rawDecision);
+
+  if (rawDecision !== undefined && rawDecision !== null && !requestedDecision) {
+    return NextResponse.json({ error: "Decisión inválida. Valores permitidos: APPROVED, REJECTED" }, { status: 400 });
+  }
+
+  const notes = body?.notes === null ? null : toNullableText(body?.notes);
 
   const updatePayload: Record<string, unknown> = {};
 
   if (requestedStatus) {
     updatePayload.status = requestedStatus;
+  }
+
+  if (rawDecision !== undefined && requestedDecision && updatePayload.status !== "UNDER_REVIEW") {
+    updatePayload.status = "COMPLETED";
   }
 
   if (typeof theoryScore === "number") {
@@ -152,16 +288,12 @@ export async function PATCH(request: Request, { params }: Params) {
     }
   }
 
-  const reviewError = await upsertReview(
-    admin,
-    id,
-    typeof body?.notes === "string" ? body.notes : null,
-    typeof body?.decision === "string" ? body.decision : null
-  );
-
-  if (reviewError) {
-    return NextResponse.json({ error: reviewError.message || "No se pudo guardar la revisión" }, { status: 400 });
+  if (rawDecision !== undefined || body?.notes !== undefined) {
+    const decisionError = await persistDecisionAndNotes(admin, id, notes, requestedDecision ?? null);
+    if (decisionError) {
+      return NextResponse.json({ error: decisionError.message || "No se pudo guardar la revisión" }, { status: 400 });
+    }
   }
 
-  return NextResponse.json({ ok: true });
+  return getAttemptDetail(request, id);
 }

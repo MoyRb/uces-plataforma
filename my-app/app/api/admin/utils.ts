@@ -74,8 +74,13 @@ export const toOptionalNumber = (value: unknown) => {
 export const normalizedAttemptStatus = (value: unknown) => {
   if (typeof value !== "string") return null;
   const normalized = value.toUpperCase();
-  if (["IN_PROGRESS", "SUBMITTED", "UNDER_REVIEW", "COMPLETED", "REVIEWED", "APPROVED", "REJECTED"].includes(normalized)) {
-    return normalized === "REVIEWED" ? "COMPLETED" : normalized;
-  }
-  return null;
+  return ["IN_PROGRESS", "SUBMITTED", "UNDER_REVIEW", "COMPLETED"].includes(normalized) ? normalized : null;
+};
+
+export const ALLOWED_ATTEMPT_STATUSES = ["IN_PROGRESS", "SUBMITTED", "UNDER_REVIEW", "COMPLETED"] as const;
+
+export const normalizedDecision = (value: unknown) => {
+  if (typeof value !== "string") return null;
+  const normalized = value.toUpperCase();
+  return ["APPROVED", "REJECTED"].includes(normalized) ? normalized : null;
 };
