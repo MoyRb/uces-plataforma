@@ -11,9 +11,13 @@ import { formatBytes } from "@/lib/format";
 import { getRoleForSession } from "@/lib/auth";
 import { supabaseBrowser } from "@/lib/supabaseClient";
 
+type Decision = "APPROVED" | "REJECTED";
+
 type AttemptDetail = {
   id: string;
   status: string | null;
+  decision?: Decision | null;
+  reviewer_notes?: string | null;
   started_at: string | null;
   submitted_at: string | null;
   deadline_at: string | null;
@@ -24,7 +28,6 @@ type AttemptDetail = {
   } | null;
   answers?: AttemptAnswer[];
   evidence_uploads?: EvidenceUpload[];
-  reviews?: Review[];
 };
 
 type AttemptAnswer = {
@@ -48,14 +51,6 @@ type EvidenceUpload = {
   mime_type?: string | null;
   created_at?: string | null;
   signedUrl?: string | null;
-};
-
-type Review = {
-  id?: string;
-  notes?: string | null;
-  comments?: string | null;
-  decision?: string | null;
-  created_at?: string | null;
 };
 
 const normalizeOptions = (raw: unknown): string[] => {
@@ -91,6 +86,12 @@ const formatAnswer = (answer: AttemptAnswer): string => {
   return "Sin respuesta";
 };
 
+const decisionBadgeVariant = (decision: string | null | undefined) => {
+  if (decision === "APPROVED") return "default" as const;
+  if (decision === "REJECTED") return "destructive" as const;
+  return "secondary" as const;
+};
+
 export default function AttemptDetailAdminPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
@@ -101,7 +102,9 @@ export default function AttemptDetailAdminPage() {
   const [token, setToken] = useState<string | null>(null);
   const [attempt, setAttempt] = useState<AttemptDetail | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [notes, setNotes] = useState("");
+  const [editableDecision, setEditableDecision] = useState<Decision | "">("");
 
   const callAdmin = async <T,>(path: string, init?: RequestInit): Promise<T> => {
     if (!token) throw new Error("Sin sesión");
@@ -126,19 +129,26 @@ export default function AttemptDetailAdminPage() {
   const loadAttempt = async () => {
     const result = await callAdmin<{ data: AttemptDetail }>(`/api/admin/attempts/${params.id}/detail`);
     setAttempt(result.data);
-    const latestReview = (result.data.reviews ?? [])[0];
-    setNotes(latestReview?.notes ?? latestReview?.comments ?? "");
+    setNotes(result.data.reviewer_notes ?? "");
+    setEditableDecision((result.data.decision as Decision | null) ?? "");
   };
 
-  const updateAttempt = async (status: string, decision?: string) => {
+  const updateAttempt = async ({ status, decision, confirmIfCompleted }: { status?: string; decision?: Decision | null; confirmIfCompleted?: boolean }) => {
+    if (confirmIfCompleted && attempt?.status === "COMPLETED") {
+      const accepted = window.confirm("Este intento ya está COMPLETED. ¿Deseas actualizar la decisión/notas?");
+      if (!accepted) return;
+    }
+
     setSaving(true);
     setErrorMessage("");
+    setSuccessMessage("");
     try {
-      await callAdmin(`/api/admin/attempts/${params.id}`, {
+      await callAdmin<{ data: AttemptDetail }>(`/api/admin/attempts/${params.id}`, {
         method: "PATCH",
         body: JSON.stringify({ status, notes, decision }),
       });
       await loadAttempt();
+      setSuccessMessage("Cambios guardados correctamente.");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "No se pudo actualizar el intento");
     } finally {
@@ -175,6 +185,8 @@ export default function AttemptDetailAdminPage() {
 
   if (loading) return <main className="p-6">Cargando…</main>;
 
+  const isCompleted = attempt?.status === "COMPLETED";
+
   return (
     <main className="min-h-screen bg-slate-50 p-6">
       <div className="mx-auto max-w-5xl space-y-4">
@@ -186,6 +198,7 @@ export default function AttemptDetailAdminPage() {
         </div>
 
         {errorMessage ? <div className="rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">{errorMessage}</div> : null}
+        {successMessage ? <div className="rounded border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">{successMessage}</div> : null}
 
         {!attempt ? (
           <Card>
@@ -204,6 +217,7 @@ export default function AttemptDetailAdminPage() {
                 <p><span className="font-medium">Vacante:</span> {attempt.application?.vacancy?.title ?? "Sin vacante"}</p>
                 <p><span className="font-medium">Módulo:</span> {attempt.application?.vacancy?.module?.name ?? "Sin módulo"}</p>
                 <p className="flex items-center gap-2"><span className="font-medium">Estado:</span> <Badge variant="secondary">{attempt.status ?? "-"}</Badge></p>
+                <p className="flex items-center gap-2"><span className="font-medium">Decisión:</span> <Badge variant={decisionBadgeVariant(attempt.decision)}>{attempt.decision ?? "Sin decisión"}</Badge></p>
                 <p><span className="font-medium">Inicio:</span> {formatDate(attempt.started_at)}</p>
                 <p><span className="font-medium">Enviado:</span> {formatDate(attempt.submitted_at)}</p>
                 <p><span className="font-medium">Deadline:</span> {formatDate(attempt.deadline_at)}</p>
@@ -216,6 +230,11 @@ export default function AttemptDetailAdminPage() {
                 <CardTitle>Acciones de revisión</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
+                <select className="w-full rounded border p-2 text-sm" value={editableDecision} onChange={(event) => setEditableDecision(event.target.value as Decision | "") }>
+                  <option value="">Sin decisión</option>
+                  <option value="APPROVED">APPROVED</option>
+                  <option value="REJECTED">REJECTED</option>
+                </select>
                 <textarea
                   className="min-h-24 w-full rounded border p-2 text-sm"
                   placeholder="Notas del revisor"
@@ -223,9 +242,12 @@ export default function AttemptDetailAdminPage() {
                   onChange={(event) => setNotes(event.target.value)}
                 />
                 <div className="flex flex-wrap gap-2">
-                  <Button disabled={saving} onClick={() => updateAttempt("UNDER_REVIEW", "UNDER_REVIEW")}>Marcar en revisión</Button>
-                  <Button disabled={saving} variant="outline" onClick={() => updateAttempt("APPROVED", "APPROVED")}>Aprobar</Button>
-                  <Button disabled={saving} variant="destructive" onClick={() => updateAttempt("REJECTED", "REJECTED")}>Rechazar</Button>
+                  <Button disabled={saving} onClick={() => updateAttempt({ status: "UNDER_REVIEW", decision: null })}>Marcar en revisión</Button>
+                  <Button disabled={saving || isCompleted} variant="outline" onClick={() => updateAttempt({ status: "COMPLETED", decision: "APPROVED" })}>Aprobar</Button>
+                  <Button disabled={saving || isCompleted} variant="destructive" onClick={() => updateAttempt({ status: "COMPLETED", decision: "REJECTED" })}>Rechazar</Button>
+                  <Button disabled={saving} variant="secondary" onClick={() => updateAttempt({ decision: editableDecision || null, confirmIfCompleted: true })}>
+                    Guardar notas / decisión
+                  </Button>
                 </div>
               </CardContent>
             </Card>
