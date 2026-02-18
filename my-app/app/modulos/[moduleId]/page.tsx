@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabaseServer } from "@/lib/supabaseServer";
 
 type ModulePageProps = {
@@ -87,10 +87,10 @@ export default async function ModuleVacanciesPage({ params }: ModulePageProps) {
                         {vacancy.status ?? ""}
                       </Badge>
                     </CardTitle>
-                    <CardDescription className="space-y-1 text-slate-700">
+                    <div className="space-y-1 text-sm text-slate-700">
                       <span className="block font-medium text-slate-800">Horario: {vacancy.schedule || "Por definir"}</span>
-                      <span className="block text-sm">Ubicación: {vacancy.location || "Por definir"}</span>
-                    </CardDescription>
+                      <span className="block">Ubicación: {vacancy.location || "Por definir"}</span>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <Button asChild className="w-full bg-orange-500 text-white hover:bg-orange-600">
