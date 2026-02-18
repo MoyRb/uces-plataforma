@@ -31,6 +31,16 @@ const isMissingAttemptsColumn = (error: SupabaseErrorLike, columnName: "decision
   return message.includes("column") && message.includes(columnName);
 };
 
+const isSchemaCacheOrMissingColumnError = (error: SupabaseErrorLike) => {
+  if (!error?.message) return false;
+  const message = error.message.toLowerCase();
+  return (
+    message.includes("schema cache") ||
+    message.includes("could not find the") ||
+    (message.includes("column") && message.includes("does not exist"))
+  );
+};
+
 const withEvidenceSignedUrls = async (
   supabase: Awaited<ReturnType<typeof requireAdmin>> extends infer T
     ? T extends { supabase: infer S }
@@ -187,19 +197,31 @@ const upsertReview = async (admin: AdminSession, id: string, notes: string | nul
   return { usedReviews: !reviewError, error: null as SupabaseErrorLike };
 };
 
-const persistDecisionAndNotes = async (admin: AdminSession, id: string, notes: string | null, decision: "APPROVED" | "REJECTED" | null) => {
+const persistDecisionAndNotes = async (
+  admin: AdminSession,
+  id: string,
+  notes: string | null,
+  decision: "APPROVED" | "REJECTED" | null
+) => {
   const reviewResult = await upsertReview(admin, id, notes, decision);
   if (reviewResult.error) {
-    return reviewResult.error;
+    return { error: reviewResult.error, warning: null as string | null };
   }
 
   if (reviewResult.usedReviews) {
-    return null;
+    return { error: null as SupabaseErrorLike, warning: null as string | null };
   }
 
   const { error } = await admin.supabase.from("attempts").update({ decision, reviewer_notes: notes }).eq("id", id);
 
-  return error;
+  if (error && isSchemaCacheOrMissingColumnError(error)) {
+    return {
+      error: null as SupabaseErrorLike,
+      warning: "No se pudieron guardar decision/reviewer_notes por caché de esquema de Supabase. Solo se actualizó el estado.",
+    };
+  }
+
+  return { error, warning: null as string | null };
 };
 
 async function getAttemptDetail(request: Request, id: string) {
@@ -273,7 +295,7 @@ export async function PATCH(request: Request, { params }: Params) {
     updatePayload.status = requestedStatus;
   }
 
-  if (rawDecision !== undefined && requestedDecision && updatePayload.status !== "UNDER_REVIEW") {
+  if ((rawDecision !== undefined || body?.notes !== undefined) && updatePayload.status !== "UNDER_REVIEW") {
     updatePayload.status = "COMPLETED";
   }
 
@@ -288,12 +310,32 @@ export async function PATCH(request: Request, { params }: Params) {
     }
   }
 
+  let warning: string | null = null;
+
   if (rawDecision !== undefined || body?.notes !== undefined) {
-    const decisionError = await persistDecisionAndNotes(admin, id, notes, requestedDecision ?? null);
-    if (decisionError) {
-      return NextResponse.json({ error: decisionError.message || "No se pudo guardar la revisión" }, { status: 400 });
+    const decisionResult = await persistDecisionAndNotes(admin, id, notes, requestedDecision ?? null);
+
+    if (decisionResult.warning) {
+      warning = decisionResult.warning;
+    }
+
+    if (decisionResult.error) {
+      if (isSchemaCacheOrMissingColumnError(decisionResult.error)) {
+        warning =
+          warning ??
+          "No se pudieron guardar decision/reviewer_notes por caché de esquema de Supabase. Solo se actualizó el estado.";
+      } else {
+        return NextResponse.json({ error: decisionResult.error.message || "No se pudo guardar la revisión" }, { status: 400 });
+      }
     }
   }
 
-  return getAttemptDetail(request, id);
+  const detailResponse = await getAttemptDetail(request, id);
+
+  if (!warning) {
+    return detailResponse;
+  }
+
+  const payload = (await detailResponse.json().catch(() => ({}))) as Record<string, unknown>;
+  return NextResponse.json({ ...payload, warning }, { status: detailResponse.status });
 }
