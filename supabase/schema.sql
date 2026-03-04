@@ -65,6 +65,7 @@ create table public.attempts (
   deadline_at timestamptz not null,
   submitted_at timestamptz,
   theory_score numeric,
+  psychometric_summary jsonb,
   status text default 'IN_PROGRESS' check (status in ('IN_PROGRESS','SUBMITTED','UNDER_REVIEW','COMPLETED'))
 );
 

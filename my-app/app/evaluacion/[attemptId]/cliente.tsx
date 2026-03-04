@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
@@ -51,6 +51,7 @@ export function EvaluationClient({
   const router = useRouter();
   const supabase = useMemo(() => supabaseBrowser(), []);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const autoSubmitTriggeredRef = useRef(false);
   const [answers, setAnswers] = useState<Record<string, string>>(initialAnswers);
   const [token, setToken] = useState<string | null>(null);
   const [savingQuestion, setSavingQuestion] = useState<string | null>(null);
@@ -80,14 +81,6 @@ export function EvaluationClient({
       router.replace(`/resultado/${attemptId}`);
     }
   }, [attemptId, router, submittedAt]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setRemainingMs(new Date(deadlineAt).getTime() - Date.now());
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [deadlineAt]);
 
   const evidenceUrl = useMemo(() => {
     if (!evidence) return null;
@@ -179,15 +172,17 @@ export function EvaluationClient({
     setUploading(false);
   };
 
-  const handleSubmitAttempt = async () => {
-    if (!token) return;
-    if (isExpired) {
-      setStatusMessage("El tiempo se agotó, no puedes enviar el intento.");
-      return;
+  const handleSubmitAttempt = useCallback(async (force = false) => {
+    if (!token || submitting) return;
+    if (force) {
+      setStatusMessage("Tiempo agotado. Enviando tu intento automáticamente...");
+    } else if (isExpired) {
+      setStatusMessage("El tiempo se agotó. Estamos enviando automáticamente tu intento.");
+    } else {
+      setStatusMessage(null);
     }
 
     setSubmitting(true);
-    setStatusMessage(null);
 
     const response = await fetch(`/api/attempts/${attemptId}/submit`, {
       method: "POST",
@@ -205,7 +200,24 @@ export function EvaluationClient({
     }
 
     router.push(`/resultado/${attemptId}`);
-  };
+  }, [attemptId, isExpired, router, submitting, token]);
+
+  useEffect(() => {
+    autoSubmitTriggeredRef.current = false;
+
+    const interval = setInterval(() => {
+      const nextRemainingMs = new Date(deadlineAt).getTime() - Date.now();
+      setRemainingMs(nextRemainingMs);
+
+      if (nextRemainingMs <= 0 && token && !submittedAt && !autoSubmitTriggeredRef.current) {
+        autoSubmitTriggeredRef.current = true;
+        void handleSubmitAttempt(true);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [deadlineAt, handleSubmitAttempt, submittedAt, token]);
+
 
   return (
     <div className="space-y-6">
@@ -305,7 +317,7 @@ export function EvaluationClient({
                 <Button
                   variant="outline"
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading || isExpired}
+                  disabled={uploading || isExpired || submitting}
                   className="bg-white"
                 >
                   {uploading ? "Subiendo..." : "Subir archivo"}
@@ -333,11 +345,11 @@ export function EvaluationClient({
               <Button
                 className="w-full bg-orange-500 text-white hover:bg-orange-600"
                 onClick={handleSubmitAttempt}
-                disabled={isExpired || submitting}
+                disabled={submitting}
               >
-                {submitting ? "Enviando..." : "Enviar evaluación"}
+                {submitting ? "Enviando..." : isExpired ? "Tiempo agotado: enviando" : "Enviar evaluación"}
               </Button>
-              <p className="mt-2 text-xs text-slate-500">Debes enviar antes de que termine el tiempo.</p>
+              <p className="mt-2 text-xs text-slate-500">Al terminar el tiempo se envía automáticamente.</p>
             </div>
           </CardContent>
         </Card>
