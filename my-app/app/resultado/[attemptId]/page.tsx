@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PsicometricoSummary } from "@/lib/psicometricoResults";
 import { formatBytes } from "@/lib/format";
 import { supabaseServer } from "@/lib/supabaseServer";
 
@@ -22,18 +23,45 @@ type AttemptResult = {
   theory_score: number | null;
   submitted_at: string | null;
   status: string | null;
+  psychometric_summary?: PsicometricoSummary | null;
   evidence_uploads: EvidenceUpload[];
 };
+
+type ReviewRubric = {
+  rubric: PsicometricoSummary | null;
+};
+
+const traitLabels = [
+  ["Estabilidad emocional", "estabilidadEmocional"],
+  ["Amabilidad", "amabilidad"],
+  ["Responsabilidad", "responsabilidad"],
+  ["Apertura", "apertura"],
+  ["Extroversión", "extroversion"],
+] as const;
 
 export default async function ResultPage({ params }: ResultPageProps) {
   const { attemptId } = await params;
   const supabase = supabaseServer();
 
-  const { data: attempt } = await supabase
+  const { data: attemptWithSummary, error: summaryColumnError } = await supabase
     .from("attempts")
-    .select("id, theory_score, submitted_at, status, evidence_uploads(path, mime_type, size, created_at)")
+    .select("id, theory_score, submitted_at, status, psychometric_summary, evidence_uploads(path, mime_type, size, created_at)")
     .eq("id", attemptId)
     .maybeSingle<AttemptResult>();
+
+  const { data: plainAttempt } = summaryColumnError
+    ? await supabase
+        .from("attempts")
+        .select("id, theory_score, submitted_at, status, evidence_uploads(path, mime_type, size, created_at)")
+        .eq("id", attemptId)
+        .maybeSingle<Omit<AttemptResult, "psychometric_summary">>()
+    : { data: null };
+
+  const attempt: AttemptResult | null = summaryColumnError
+    ? plainAttempt
+      ? { ...plainAttempt, psychometric_summary: null }
+      : null
+    : attemptWithSummary;
 
   if (!attempt) {
     return (
@@ -47,6 +75,20 @@ export default async function ResultPage({ params }: ResultPageProps) {
         </div>
       </main>
     );
+  }
+
+  let summary = attempt.psychometric_summary ?? null;
+
+  if (!summary) {
+    const { data: review } = await supabase
+      .from("reviews")
+      .select("rubric")
+      .eq("attempt_id", attemptId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle<ReviewRubric>();
+
+    summary = review?.rubric ?? null;
   }
 
   const evidence = attempt.evidence_uploads?.[0];
@@ -75,10 +117,41 @@ export default async function ResultPage({ params }: ResultPageProps) {
           <CardContent className="space-y-3 text-slate-800">
             <p className="text-sm">Folio de intento: {attempt.id}</p>
             <div className="rounded-lg bg-slate-50 p-4">
-              <p className="text-sm font-semibold text-slate-900">Puntaje teórico</p>
+              <p className="text-sm font-semibold text-slate-900">Puntaje general</p>
               <p className="text-2xl font-bold text-blue-700">{attempt.theory_score ?? 0} / 100</p>
-              <p className="text-xs text-slate-500">Se calculará nuevamente durante la revisión.</p>
+              <p className="text-xs text-slate-500">Calculado por suma Likert del psicométrico.</p>
             </div>
+
+            {summary ? (
+              <div className="space-y-4 rounded-lg border border-slate-200 bg-white p-4">
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">Cultura Capital</p>
+                  <p className="text-xl font-bold text-orange-600">
+                    {summary.cultureCapital.score} / {summary.cultureCapital.max}
+                  </p>
+                  <p className="text-sm text-slate-700">{summary.cultureCapital.classification}</p>
+                </div>
+
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">Mini Big Five</p>
+                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                    {traitLabels.map(([label, key]) => {
+                      const trait = summary.miniBigFive[key];
+                      return (
+                        <div key={key} className="rounded-lg bg-slate-50 p-3 text-sm">
+                          <p className="font-semibold text-slate-900">{label}</p>
+                          <p className="text-base font-bold text-blue-700">{trait.score} / {trait.max}</p>
+                          <p className="text-xs text-slate-600">{trait.classification}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-slate-600">Aún no hay resumen psicométrico disponible para este intento.</p>
+            )}
+
             {evidence ? (
               <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-700">
                 <p className="font-semibold text-slate-900">Evidencia subida</p>
