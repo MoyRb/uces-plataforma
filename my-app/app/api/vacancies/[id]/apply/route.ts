@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { PSICOMETRICO_REQUIRED_MESSAGE } from "@/lib/assessmentConstants";
+import { getPsicometricoAttemptState } from "@/lib/psicometrico";
 import { supabaseServer } from "@/lib/supabaseServer";
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -20,6 +22,22 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   const userId = userData.user.id;
   const vacancyId = id;
+
+  const psicometricoState = await getPsicometricoAttemptState(supabase, userId);
+  if (psicometricoState.error) {
+    return NextResponse.json({ error: psicometricoState.error }, { status: 400 });
+  }
+
+  if (!psicometricoState.completed) {
+    return NextResponse.json(
+      {
+        error: PSICOMETRICO_REQUIRED_MESSAGE,
+        requiresPsychometric: true,
+        redirectTo: "/psicometrico",
+      },
+      { status: 403 },
+    );
+  }
 
   const { data: assessment, error: assessmentError } = await supabase
     .from("assessments")

@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { PSICOMETRICO_REQUIRED_MESSAGE } from "@/lib/assessmentConstants";
 import { supabaseBrowser } from "@/lib/supabaseClient";
 
 export function ApplyButton({ vacancyId }: { vacancyId: string }) {
@@ -35,7 +36,12 @@ export function ApplyButton({ vacancyId }: { vacancyId: string }) {
     const payload = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      setError(payload.error ?? "No se pudo completar la postulación");
+      if (payload.requiresPsychometric) {
+        setError(payload.error ?? PSICOMETRICO_REQUIRED_MESSAGE);
+        router.push(payload.redirectTo ?? "/psicometrico");
+      } else {
+        setError(payload.error ?? "No se pudo completar la postulación");
+      }
       setLoading(false);
       return;
     }
