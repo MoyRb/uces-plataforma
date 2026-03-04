@@ -11,6 +11,11 @@ const isMissingReviewsTable = (error: SupabaseErrorLike) => {
   return error.code === "42P01" || error.code === "PGRST205" || error.message?.toLowerCase().includes("reviews") || false;
 };
 
+const isMissingPsychometricSummaryColumn = (error: SupabaseErrorLike) => {
+  if (!error) return false;
+  return error.code === "42703" || error.message?.toLowerCase().includes("psychometric_summary") || false;
+};
+
 const readDecisionState = async (admin: Exclude<Awaited<ReturnType<typeof requireAdmin>>, NextResponse>, attemptId: string) => {
   const { data: reviewData, error: reviewError } = await admin.supabase
     .from("reviews")
@@ -58,13 +63,24 @@ export async function GET(request: Request, { params }: Params) {
   const admin = await requireAdmin(request);
   if (admin instanceof NextResponse) return admin;
 
-  const { data, error } = await admin.supabase
+  const queryWithSummary = admin.supabase
     .from("attempts")
     .select(
-      "id, assessment_id, status, started_at, submitted_at, deadline_at, theory_score, application:applications!inner(id, user_id, vacancy_id, vacancy:vacancies(id, title, module_id, module:modules(id, name)), profile:profiles!applications_user_id_fkey(name, email)), answers(*, question:questions(id, prompt, options, correct_option)), evidence_uploads(*)"
+      "id, assessment_id, status, started_at, submitted_at, deadline_at, theory_score, psychometric_summary, application:applications!inner(id, user_id, vacancy_id, vacancy:vacancies(id, title, module_id, module:modules(id, name)), profile:profiles!applications_user_id_fkey(name, email)), answers(*, question:questions(id, prompt, options, correct_option)), evidence_uploads(*)"
     )
-    .eq("id", id)
-    .maybeSingle<Record<string, unknown>>();
+    .eq("id", id);
+
+  const { data: dataWithSummary, error: errorWithSummary } = await queryWithSummary.maybeSingle<Record<string, unknown>>();
+
+  const { data, error } = isMissingPsychometricSummaryColumn(errorWithSummary)
+    ? await admin.supabase
+        .from("attempts")
+        .select(
+          "id, assessment_id, status, started_at, submitted_at, deadline_at, theory_score, application:applications!inner(id, user_id, vacancy_id, vacancy:vacancies(id, title, module_id, module:modules(id, name)), profile:profiles!applications_user_id_fkey(name, email)), answers(*, question:questions(id, prompt, options, correct_option)), evidence_uploads(*)"
+        )
+        .eq("id", id)
+        .maybeSingle<Record<string, unknown>>()
+    : { data: dataWithSummary, error: errorWithSummary };
 
   if (error || !data) {
     return NextResponse.json({ error: "Intento no encontrado" }, { status: 404 });
