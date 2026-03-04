@@ -7,6 +7,7 @@ import type { Session } from "@supabase/supabase-js";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PSICOMETRICO_BASE_ASSESSMENT_ID, PSICOMETRICO_REQUIRED_MESSAGE } from "@/lib/assessmentConstants";
 import { getRoleForSession } from "@/lib/auth";
 import { supabaseBrowser } from "@/lib/supabaseClient";
 
@@ -30,6 +31,7 @@ export default function PanelPage() {
   const [loadingModules, setLoadingModules] = useState(true);
   const [checkingSession, setCheckingSession] = useState(true);
   const [userRole, setUserRole] = useState<"user" | "admin">("user");
+  const [psicometricoReady, setPsicometricoReady] = useState<boolean | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -91,6 +93,27 @@ export default function PanelPage() {
     loadModules();
   }, [session, supabase]);
 
+  useEffect(() => {
+    if (!session) return;
+
+    const loadPsicometricoState = async () => {
+      const { data } = await supabase
+        .from("attempts")
+        .select("status, submitted_at")
+        .eq("assessment_id", PSICOMETRICO_BASE_ASSESSMENT_ID)
+        .order("started_at", { ascending: false });
+
+      const hasCompleted = (data ?? []).some((attempt) => {
+        if (attempt.submitted_at) return true;
+        return ["SUBMITTED", "UNDER_REVIEW", "COMPLETED"].includes(attempt.status ?? "");
+      });
+
+      setPsicometricoReady(hasCompleted);
+    };
+
+    loadPsicometricoState();
+  }, [session, supabase]);
+
   if (checkingSession) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-50">
@@ -133,6 +156,16 @@ export default function PanelPage() {
             </p>
           </div>
         </header>
+
+        {!isAdmin && psicometricoReady === false ? (
+          <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+            <p className="text-sm font-semibold text-amber-800">Requisito pendiente</p>
+            <p className="mt-1 text-sm text-amber-900">{PSICOMETRICO_REQUIRED_MESSAGE}</p>
+            <Button asChild className="mt-4">
+              <Link href="/psicometrico">Iniciar psicométrico</Link>
+            </Button>
+          </section>
+        ) : null}
 
         <section className="space-y-4">
           <div className="flex items-center justify-between">
