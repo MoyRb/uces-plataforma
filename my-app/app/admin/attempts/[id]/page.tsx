@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { formatBytes } from "@/lib/format";
 import { getRoleForSession } from "@/lib/auth";
 import { supabaseBrowser } from "@/lib/supabaseClient";
+import { PsicometricoSummary } from "@/lib/psicometricoResults";
 
 type Decision = "APPROVED" | "REJECTED";
 
@@ -28,6 +29,7 @@ type AttemptDetail = {
   } | null;
   answers?: AttemptAnswer[];
   evidence_uploads?: EvidenceUpload[];
+  psychometric_summary?: PsicometricoSummary | null;
 };
 
 type AttemptAnswer = {
@@ -85,6 +87,15 @@ const formatAnswer = (answer: AttemptAnswer): string => {
 
   return "Sin respuesta";
 };
+
+
+const traitLabels = [
+  ["Estabilidad emocional", "estabilidadEmocional"],
+  ["Amabilidad", "amabilidad"],
+  ["Responsabilidad", "responsabilidad"],
+  ["Apertura", "apertura"],
+  ["Extroversión", "extroversion"],
+] as const;
 
 const decisionBadgeVariant = (decision: string | null | undefined) => {
   if (decision === "APPROVED") return "default" as const;
@@ -228,6 +239,46 @@ export default function AttemptDetailAdminPage() {
                 <p><span className="font-medium">Enviado:</span> {formatDate(attempt.submitted_at)}</p>
                 <p><span className="font-medium">Deadline:</span> {formatDate(attempt.deadline_at)}</p>
                 <p><span className="font-medium">Puntaje teórico:</span> {attempt.theory_score ?? "-"}</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Resumen psicométrico</CardTitle>
+                <CardDescription>Visible solo para revisión interna de admin.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                {attempt.psychometric_summary ? (
+                  <>
+                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                      <p className="font-medium text-slate-900">Cultura Capital</p>
+                      <p className="text-base font-semibold text-orange-700">
+                        {attempt.psychometric_summary.cultureCapital.score} / {attempt.psychometric_summary.cultureCapital.max}
+                      </p>
+                      <p className="text-slate-700">{attempt.psychometric_summary.cultureCapital.classification}</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <p className="font-medium text-slate-900">Mini Big Five</p>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {traitLabels.map(([label, key]) => {
+                          const trait = attempt.psychometric_summary?.miniBigFive[key];
+                          if (!trait) return null;
+
+                          return (
+                            <div key={key} className="rounded border bg-white p-3">
+                              <p className="font-medium text-slate-900">{label}</p>
+                              <p className="font-semibold text-blue-700">{trait.score} / {trait.max}</p>
+                              <p className="text-xs text-slate-600">{trait.classification}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-slate-600">No hay resumen psicométrico guardado para este intento.</p>
+                )}
               </CardContent>
             </Card>
 
