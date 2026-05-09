@@ -14,7 +14,12 @@ const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 export async function requireAdmin(request: Request): Promise<AdminContext | NextResponse> {
   const supabase = supabaseServer();
   const authHeader = request.headers.get("authorization");
-  const token = authHeader?.replace("Bearer ", "").trim();
+
+  if (!authHeader?.startsWith("Bearer ")) {
+    return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+  }
+
+  const token = authHeader.replace("Bearer ", "").trim();
 
   if (!token) {
     return NextResponse.json({ error: "No autenticado" }, { status: 401 });

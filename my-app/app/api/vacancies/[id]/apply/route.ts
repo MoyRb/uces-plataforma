@@ -8,11 +8,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const supabase = supabaseServer();
   const { id } = await params;
   const authHeader = request.headers.get("authorization");
-  const token = authHeader?.replace("Bearer ", "");
 
-  if (!token) {
+  if (!authHeader?.startsWith("Bearer ")) {
     return NextResponse.json({ error: "No autenticado" }, { status: 401 });
   }
+
+  const token = authHeader.replace("Bearer ", "").trim();
 
   const { data: userData, error: userError } = await supabase.auth.getUser(token);
 
@@ -37,6 +38,20 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       },
       { status: 403 },
     );
+  }
+
+  const { data: vacancy, error: vacancyError } = await supabase
+    .from("vacancies")
+    .select("id, status")
+    .eq("id", vacancyId)
+    .maybeSingle();
+
+  if (vacancyError || !vacancy) {
+    return NextResponse.json({ error: "Vacante no encontrada" }, { status: 404 });
+  }
+
+  if (vacancy.status !== "open") {
+    return NextResponse.json({ error: "Esta vacante no está abierta para nuevas postulaciones" }, { status: 400 });
   }
 
   const { data: assessment, error: assessmentError } = await supabase

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { requireAdmin, toNullableText } from "../utils";
+import { requireAdmin, toNullableText } from "@/app/api/admin/utils";
 
 const normalizeStatus = (value: unknown): "open" | "closed" | "draft" => {
   if (value === "closed" || value === "draft") return value;
@@ -14,12 +14,23 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const moduleId = url.searchParams.get("module_id");
 
-  let query = admin.supabase.from("vacancies").select("*, modules(name)").order("title");
+  let query = admin.supabase
+    .from("vacancies")
+    .select("*, modules(name)")
+    .order("title");
 
-  if (moduleId) query = query.eq("module_id", moduleId);
+  if (moduleId) {
+    query = query.eq("module_id", moduleId);
+  }
 
   const { data, error } = await query;
-  if (error) return NextResponse.json({ error: "No se pudieron cargar vacantes" }, { status: 400 });
+
+  if (error) {
+    return NextResponse.json(
+      { error: "No se pudieron cargar vacantes" },
+      { status: 400 }
+    );
+  }
 
   return NextResponse.json({ data: data ?? [] });
 }
@@ -31,7 +42,13 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
 
   const title = toNullableText(body?.title);
-  if (!title) return NextResponse.json({ error: "El título es obligatorio" }, { status: 400 });
+
+  if (!title) {
+    return NextResponse.json(
+      { error: "El título es obligatorio" },
+      { status: 400 }
+    );
+  }
 
   const payload = {
     module_id: toNullableText(body?.module_id),
@@ -43,9 +60,21 @@ export async function POST(request: Request) {
     status: normalizeStatus(body?.status),
   };
 
-  const vacancyResponse = await admin.supabase.from("vacancies").insert(payload).select("*").single();
+  const vacancyResponse = await admin.supabase
+    .from("vacancies")
+    .insert(payload)
+    .select("*")
+    .single();
+
   if (vacancyResponse.error || !vacancyResponse.data) {
-    return NextResponse.json({ error: vacancyResponse.error?.message || "No se pudo crear la vacante" }, { status: 400 });
+    return NextResponse.json(
+      {
+        error:
+          vacancyResponse.error?.message ||
+          "No se pudo crear la vacante",
+      },
+      { status: 400 }
+    );
   }
 
   const assessmentResponse = await admin.supabase
@@ -59,9 +88,26 @@ export async function POST(request: Request) {
     .single();
 
   if (assessmentResponse.error) {
-    await admin.supabase.from("vacancies").delete().eq("id", vacancyResponse.data.id);
-    return NextResponse.json({ error: assessmentResponse.error.message || "No se pudo crear la evaluación automática" }, { status: 400 });
+    await admin.supabase
+      .from("vacancies")
+      .delete()
+      .eq("id", vacancyResponse.data.id);
+
+    return NextResponse.json(
+      {
+        error:
+          assessmentResponse.error.message ||
+          "No se pudo crear la evaluación automática",
+      },
+      { status: 400 }
+    );
   }
 
-  return NextResponse.json({ data: vacancyResponse.data, assessment: assessmentResponse.data }, { status: 201 });
+  return NextResponse.json(
+    {
+      data: vacancyResponse.data,
+      assessment: assessmentResponse.data,
+    },
+    { status: 201 }
+  );
 }
