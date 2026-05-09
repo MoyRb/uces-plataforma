@@ -24,8 +24,9 @@ En **Supabase Dashboard → SQL Editor**, ejecuta en este orden:
 
 1. `supabase/schema.sql`
 2. `supabase/seed.sql` (opcional para datos de prueba)
-3. `supabase/roles.sql` (tabla `user_roles` + RPC `get_my_role()`)
-4. `supabase/rls.sql` (políticas RLS de tablas y Storage)
+3. `supabase/migrations/20260509_fix_admin_roles.sql` (si no existe `public.user_roles` o si el admin no se refleja correctamente)
+4. `supabase/roles.sql` (tabla `user_roles` + RPC `get_my_role()`)
+5. `supabase/rls.sql` (políticas RLS de tablas y Storage)
 
 > `supabase/rls.sql` crea/asegura el bucket privado `evidences` y agrega policies sobre `storage.objects`.
 
