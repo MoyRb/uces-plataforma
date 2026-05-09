@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PSICOMETRICO_BASE_ASSESSMENT_ID } from "@/lib/assessmentConstants";
 import { supabaseServer } from "@/lib/supabaseServer";
 
 import { EvaluationClient } from "./cliente";
@@ -84,8 +85,9 @@ export default async function EvaluationPage({ params }: EvaluationPageProps) {
     );
   }
 
-  const questions = (attempt.assessment.questions || []).slice(0, 5);
-  const practicalTask = attempt.assessment.practical_tasks?.[0] ?? null;
+  const isPsicometricoBase = attempt.assessment.id === PSICOMETRICO_BASE_ASSESSMENT_ID;
+  const questions = attempt.assessment.questions || [];
+  const practicalTask = isPsicometricoBase ? null : attempt.assessment.practical_tasks?.[0] ?? null;
   const answersMap = (savedAnswers as SavedAnswer[] | null)?.reduce<Record<string, string>>((acc, answer) => {
     if (answer.selected_option) {
       acc[answer.question_id] = answer.selected_option;
@@ -111,8 +113,9 @@ export default async function EvaluationPage({ params }: EvaluationPageProps) {
           submittedAt={attempt.submitted_at}
           questions={questions}
           practicalTask={practicalTask}
+          showPracticalSection={!isPsicometricoBase}
           initialAnswers={answersMap}
-          initialEvidence={(evidenceUploads as EvidenceUpload[] | null)?.[0] ?? null}
+          initialEvidence={isPsicometricoBase ? null : (evidenceUploads as EvidenceUpload[] | null)?.[0] ?? null}
         />
       </div>
     </main>
