@@ -1,11 +1,4 @@
 export type PsicometricoSummary = {
-  cultureCapital: {
-    score: number;
-    min: number;
-    max: number;
-    classification: string;
-    answered: number;
-  };
   miniBigFive: {
     estabilidadEmocional: TraitResult;
     amabilidad: TraitResult;
@@ -32,13 +25,6 @@ type QuestionWithAnswer = {
   selected_option: string | null;
 };
 
-const classifyCultureCapital = (score: number) => {
-  if (score <= 40) return "Bajo ajuste cultural";
-  if (score <= 55) return "Ajuste medio";
-  if (score <= 65) return "Buen ajuste";
-  return "Alta alineación";
-};
-
 const classifyTrait = (score: number, high: string, mid: string, low: string) => {
   if (score >= 16) return high;
   if (score >= 11) return mid;
@@ -49,12 +35,13 @@ const buildTraitResult = (
   score: number,
   answered: number,
   labels: { high: string; mid: string; low: string },
-  withFilter = true
+  withFilter = true,
+  note?: string
 ): TraitResult => ({
   score,
   min: 4,
   max: 20,
-  classification: withFilter ? classifyTrait(score, labels.high, labels.mid, labels.low) : "Indicador sin filtro",
+  classification: withFilter ? classifyTrait(score, labels.high, labels.mid, labels.low) : (note ?? "Indicador sin filtro"),
   answered,
 });
 
@@ -66,9 +53,6 @@ const parseLikertValue = (value: string | null) => {
 };
 
 export const calculatePsicometricoSummary = (questionsWithAnswers: QuestionWithAnswer[]): PsicometricoSummary => {
-  let cultureCapitalScore = 0;
-  let cultureCapitalAnswered = 0;
-
   const traitScores: Record<"ESTABILIDAD_EMOCIONAL" | "AMABILIDAD" | "RESPONSABILIDAD" | "APERTURA" | "EXTROVERSION", number> = {
     ESTABILIDAD_EMOCIONAL: 0,
     AMABILIDAD: 0,
@@ -91,12 +75,6 @@ export const calculatePsicometricoSummary = (questionsWithAnswers: QuestionWithA
 
     const segments = prompt.split("|").map((segment) => segment.trim());
 
-    if (segments[0] === "CULTURA_CAPITAL" && segments.length === 2) {
-      cultureCapitalScore += likertValue;
-      cultureCapitalAnswered += 1;
-      return;
-    }
-
     if (segments[0] === "MINI_BIG_FIVE" && segments.length >= 3) {
       const traitKey = segments[1] as keyof typeof traitScores;
       if (traitKey in traitScores) {
@@ -107,13 +85,6 @@ export const calculatePsicometricoSummary = (questionsWithAnswers: QuestionWithA
   });
 
   return {
-    cultureCapital: {
-      score: cultureCapitalScore,
-      min: 15,
-      max: 75,
-      classification: classifyCultureCapital(cultureCapitalScore),
-      answered: cultureCapitalAnswered,
-    },
     miniBigFive: {
       estabilidadEmocional: buildTraitResult(traitScores.ESTABILIDAD_EMOCIONAL, traitAnswered.ESTABILIDAD_EMOCIONAL, {
         high: "Alta",
@@ -143,18 +114,18 @@ export const calculatePsicometricoSummary = (questionsWithAnswers: QuestionWithA
           mid: "",
           low: "",
         },
-        false
+        false,
+        "No es filtro de contratación, solo indicador de integración."
       ),
     },
     totals: {
       likertAnswered:
-        cultureCapitalAnswered +
         traitAnswered.ESTABILIDAD_EMOCIONAL +
         traitAnswered.AMABILIDAD +
         traitAnswered.RESPONSABILIDAD +
         traitAnswered.APERTURA +
         traitAnswered.EXTROVERSION,
-      likertQuestions: 35,
+      likertQuestions: 20,
     },
   };
 };

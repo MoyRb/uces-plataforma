@@ -90,11 +90,11 @@ const formatAnswer = (answer: AttemptAnswer): string => {
 
 
 const traitLabels = [
-  ["Estabilidad emocional", "estabilidadEmocional"],
-  ["Amabilidad", "amabilidad"],
-  ["Responsabilidad", "responsabilidad"],
-  ["Apertura", "apertura"],
-  ["Extroversión", "extroversion"],
+  ["ESTABILIDAD_EMOCIONAL", "Estabilidad emocional", "estabilidadEmocional"],
+  ["AMABILIDAD", "Amabilidad", "amabilidad"],
+  ["RESPONSABILIDAD", "Responsabilidad", "responsabilidad"],
+  ["APERTURA", "Apertura", "apertura"],
+  ["EXTROVERSION", "Extroversión", "extroversion"],
 ] as const;
 
 const decisionBadgeVariant = (decision: string | null | undefined) => {
@@ -250,26 +250,30 @@ export default function AttemptDetailAdminPage() {
               <CardContent className="space-y-3 text-sm">
                 {attempt.psychometric_summary ? (
                   <>
-                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                      <p className="font-medium text-slate-900">Cultura Capital</p>
-                      <p className="text-base font-semibold text-orange-700">
-                        {attempt.psychometric_summary.cultureCapital.score} / {attempt.psychometric_summary.cultureCapital.max}
-                      </p>
-                      <p className="text-slate-700">{attempt.psychometric_summary.cultureCapital.classification}</p>
-                    </div>
-
                     <div className="space-y-2">
                       <p className="font-medium text-slate-900">Mini Big Five</p>
-                      <div className="grid gap-2 sm:grid-cols-2">
-                        {traitLabels.map(([label, key]) => {
+                      <div className="grid gap-2">
+                        {traitLabels.map(([traitSlug, label, key]) => {
                           const trait = attempt.psychometric_summary?.miniBigFive[key];
                           if (!trait) return null;
+                          const traitAnswers = (attempt.answers ?? []).filter((answer) =>
+                            answer.question?.prompt?.startsWith(`MINI_BIG_FIVE | ${traitSlug} |`)
+                          );
 
                           return (
                             <div key={key} className="rounded border bg-white p-3">
                               <p className="font-medium text-slate-900">{label}</p>
-                              <p className="font-semibold text-blue-700">{trait.score} / {trait.max}</p>
+                              <p className="font-semibold text-blue-700">{trait.score} / 20</p>
                               <p className="text-xs text-slate-600">{trait.classification}</p>
+                              {traitAnswers.length > 0 ? (
+                                <div className="mt-2 space-y-1 text-xs text-slate-700">
+                                  {traitAnswers.map((answer) => (
+                                    <p key={answer.id}>
+                                      • {answer.question?.prompt?.split("|").slice(2).join("|").trim()}: {formatAnswer(answer)}
+                                    </p>
+                                  ))}
+                                </div>
+                              ) : null}
                             </div>
                           );
                         })}

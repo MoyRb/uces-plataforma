@@ -35,6 +35,7 @@ type EvaluationClientProps = {
   submittedAt: string | null;
   questions: Question[];
   practicalTask: PracticalTask | null;
+  showPracticalSection: boolean;
   initialAnswers: Record<string, string>;
   initialEvidence: EvidenceFile | null;
 };
@@ -45,6 +46,7 @@ export function EvaluationClient({
   submittedAt,
   questions,
   practicalTask,
+  showPracticalSection,
   initialAnswers,
   initialEvidence,
 }: EvaluationClientProps) {
@@ -285,6 +287,7 @@ export function EvaluationClient({
           </CardContent>
         </Card>
 
+        {showPracticalSection ? (
         <Card className="border-slate-100 shadow-md">
           <CardHeader>
             <CardTitle className="text-lg text-slate-900">Sección B: Práctica</CardTitle>
@@ -353,7 +356,18 @@ export function EvaluationClient({
             </div>
           </CardContent>
         </Card>
+        ) : null}
       </div>
+      {!showPracticalSection ? (
+        <Card className="border-slate-100 shadow-md">
+          <CardContent className="pt-6">
+            <Button className="w-full bg-orange-500 text-white hover:bg-orange-600" onClick={handleSubmitAttempt} disabled={submitting}>
+              {submitting ? "Enviando..." : isExpired ? "Tiempo agotado: enviando" : "Enviar evaluación"}
+            </Button>
+            <p className="mt-2 text-xs text-slate-500">Al terminar el tiempo se envía automáticamente.</p>
+          </CardContent>
+        </Card>
+      ) : null}
     </div>
   );
 }
