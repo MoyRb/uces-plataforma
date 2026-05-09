@@ -1,4 +1,5 @@
--- Roles de aplicación por usuario (admin/user)
+-- Fix admin roles model: user_roles table + get_my_role fallback to profiles.role
+
 create table if not exists public.user_roles (
   user_id uuid primary key references auth.users(id) on delete cascade,
   role text not null default 'user' check (role in ('user', 'admin')),
@@ -9,7 +10,6 @@ create table if not exists public.user_roles (
 alter table public.user_roles
   add column if not exists updated_at timestamptz not null default now();
 
--- Backfill de roles existentes desde profiles.role para no romper usuarios previos.
 insert into public.user_roles (user_id, role)
 select
   p.user_id,
@@ -41,7 +41,6 @@ begin
     return current_role;
   end if;
 
-  -- Fallback a la lógica antigua basada en profiles.role.
   select p.role
     into current_role
   from public.profiles p
@@ -75,10 +74,3 @@ create policy "admins-manage-user-roles"
   to authenticated
   using (public.get_my_role() = 'admin')
   with check (public.get_my_role() = 'admin');
-
--- Ejemplo: promover usuario a admin.
-insert into public.user_roles (user_id, role)
-values ('<uuid>', 'admin')
-on conflict (user_id) do update
-  set role = excluded.role,
-      updated_at = now();
