@@ -27,7 +27,7 @@ type Module = {
 type AttemptState = {
   status: string | null;
   submitted_at: string | null;
-  application?: { user_id: string } | null;
+  application?: { user_id: string } | { user_id: string }[] | null;
 };
 
 const completedStatuses = new Set(["SUBMITTED", "UNDER_REVIEW", "COMPLETED"]);

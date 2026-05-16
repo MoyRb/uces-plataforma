@@ -347,7 +347,7 @@ export function EvaluationClient({
             <div className="pt-2">
               <Button
                 className="w-full bg-orange-500 text-white hover:bg-orange-600"
-                onClick={handleSubmitAttempt}
+                onClick={() => void handleSubmitAttempt()}
                 disabled={submitting}
               >
                 {submitting ? "Enviando..." : isExpired ? "Tiempo agotado: enviando" : "Enviar evaluación"}
@@ -361,7 +361,7 @@ export function EvaluationClient({
       {!showPracticalSection ? (
         <Card className="border-slate-100 shadow-md">
           <CardContent className="pt-6">
-            <Button className="w-full bg-orange-500 text-white hover:bg-orange-600" onClick={handleSubmitAttempt} disabled={submitting}>
+            <Button className="w-full bg-orange-500 text-white hover:bg-orange-600" onClick={() => void handleSubmitAttempt()} disabled={submitting}>
               {submitting ? "Enviando..." : isExpired ? "Tiempo agotado: enviando" : "Enviar evaluación"}
             </Button>
             <p className="mt-2 text-xs text-slate-500">Al terminar el tiempo se envía automáticamente.</p>
