@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { ReviewDecision } from "@/lib/reviewDecision";
 
 import {
   ALLOWED_ATTEMPT_STATUSES,
@@ -15,7 +16,7 @@ type AdminSession = Exclude<Awaited<ReturnType<typeof requireAdmin>>, NextRespon
 type SupabaseErrorLike = { code?: string; message?: string } | null;
 
 type DecisionPayload = {
-  decision: "APPROVED" | "REJECTED" | null;
+  decision: ReviewDecision | null;
   notes: string | null;
   source: "reviews" | "attempts" | "none";
 };
@@ -142,7 +143,7 @@ const readDecisionState = async (admin: AdminSession, attemptId: string): Promis
   return { decision: null, notes: null, source: "none" };
 };
 
-const upsertReview = async (admin: AdminSession, id: string, notes: string | null, decision: "APPROVED" | "REJECTED" | null) => {
+const upsertReview = async (admin: AdminSession, id: string, notes: string | null, decision: ReviewDecision | null) => {
   const { data: existingReview, error: existingReviewError } = await admin.supabase
     .from("reviews")
     .select("id")
@@ -201,7 +202,7 @@ const persistDecisionAndNotes = async (
   admin: AdminSession,
   id: string,
   notes: string | null,
-  decision: "APPROVED" | "REJECTED" | null
+  decision: ReviewDecision | null
 ) => {
   const reviewResult = await upsertReview(admin, id, notes, decision);
   if (reviewResult.error) {
