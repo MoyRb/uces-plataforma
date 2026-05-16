@@ -123,3 +123,25 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .uces-page {
+    @apply min-h-screen bg-[radial-gradient(circle_at_top_left,_#dbeafe,_transparent_34%),linear-gradient(180deg,_#f8fafc_0%,_#eef2ff_100%)];
+  }
+
+  .uces-container {
+    @apply mx-auto w-full max-w-6xl px-6 py-10;
+  }
+
+  .uces-input {
+    @apply w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-100;
+  }
+
+  .uces-label {
+    @apply text-sm font-semibold text-slate-700;
+  }
+
+  .uces-section-title {
+    @apply text-xl font-bold tracking-tight text-slate-950;
+  }
+}

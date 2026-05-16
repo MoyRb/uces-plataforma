@@ -2,18 +2,20 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { PSICOMETRICO_REQUIRED_MESSAGE } from "@/lib/assessmentConstants";
 import { supabaseBrowser } from "@/lib/supabaseClient";
 
-export function ApplyButton({ vacancyId }: { vacancyId: string }) {
+export function ApplyButton({ vacancyId, disabled = false }: { vacancyId: string; disabled?: boolean }) {
   const router = useRouter();
   const supabase = useMemo(() => supabaseBrowser(), []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleApply = async () => {
+    if (disabled) return;
     setLoading(true);
     setError(null);
 
@@ -51,14 +53,11 @@ export function ApplyButton({ vacancyId }: { vacancyId: string }) {
 
   return (
     <div className="space-y-2">
-      <Button
-        onClick={handleApply}
-        disabled={loading}
-        className="w-full bg-orange-500 text-white hover:bg-orange-600"
-      >
-        {loading ? "Procesando..." : "Postularme ahora"}
+      <Button onClick={handleApply} disabled={loading || disabled} className="w-full">
+        {disabled ? "Vacante no disponible" : loading ? "Procesando..." : "Postularme ahora"}
+        {!loading && !disabled ? <ArrowRight className="h-4 w-4" /> : null}
       </Button>
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      {error ? <p className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p> : null}
     </div>
   );
 }

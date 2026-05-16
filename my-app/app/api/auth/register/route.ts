@@ -85,5 +85,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Esta CURP ya está registrada" }, { status: 400 });
   }
 
+  const { error: roleError } = await supabase.from("user_roles").insert({
+    user_id: userId,
+    role: "user",
+  });
+
+  if (roleError) {
+    await supabase.auth.admin.deleteUser(userId);
+    return NextResponse.json({ error: "No se pudo asignar el rol inicial" }, { status: 500 });
+  }
+
   return NextResponse.json({ message: "Usuario creado" }, { status: 201 });
 }

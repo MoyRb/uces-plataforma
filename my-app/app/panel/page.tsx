@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import { ArrowRight, BriefcaseBusiness, ClipboardCheck, LayoutDashboard, LogOut, ShieldCheck, UserRound } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PSICOMETRICO_BASE_ASSESSMENT_ID, PSICOMETRICO_REQUIRED_MESSAGE } from "@/lib/assessmentConstants";
@@ -22,6 +24,14 @@ type Module = {
   description: string | null;
 };
 
+type AttemptState = {
+  status: string | null;
+  submitted_at: string | null;
+  application?: { user_id: string } | null;
+};
+
+const completedStatuses = new Set(["SUBMITTED", "UNDER_REVIEW", "COMPLETED"]);
+
 export default function PanelPage() {
   const router = useRouter();
   const supabase = useMemo(() => supabaseBrowser(), []);
@@ -32,6 +42,7 @@ export default function PanelPage() {
   const [checkingSession, setCheckingSession] = useState(true);
   const [userRole, setUserRole] = useState<"user" | "admin">("user");
   const [psicometricoReady, setPsicometricoReady] = useState<boolean | null>(null);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -55,16 +66,12 @@ export default function PanelPage() {
         .eq("user_id", session.user.id)
         .maybeSingle();
 
-      if (!error && data) {
-        setProfile(data as Profile);
-      } else {
-        setProfile({ name: null, email: session.user.email ?? null });
-      }
+      if (!error && data) setProfile(data as Profile);
+      else setProfile({ name: null, email: session.user.email ?? null });
     };
 
-    loadProfile();
+    void loadProfile();
   }, [session, supabase]);
-
 
   useEffect(() => {
     if (!session) return;
@@ -74,123 +81,220 @@ export default function PanelPage() {
       setUserRole(role);
     };
 
-    loadRole();
+    void loadRole();
   }, [session, supabase]);
 
   useEffect(() => {
     if (!session) return;
 
     const loadModules = async () => {
+      setLoadingModules(true);
+      setErrorMessage("");
+
       const { data, error } = await supabase.from("modules").select("id, name, description").order("name");
 
-      if (!error && data) {
-        setModules(data as Module[]);
-      }
+      if (error) setErrorMessage("No se pudieron cargar los módulos disponibles.");
+      else setModules((data ?? []) as Module[]);
 
       setLoadingModules(false);
     };
 
-    loadModules();
+    void loadModules();
   }, [session, supabase]);
 
   useEffect(() => {
     if (!session) return;
 
     const loadPsicometricoState = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("attempts")
-        .select("status, submitted_at")
+        .select("status, submitted_at, application:applications!inner(user_id)")
         .eq("assessment_id", PSICOMETRICO_BASE_ASSESSMENT_ID)
+        .eq("application.user_id", session.user.id)
         .order("started_at", { ascending: false });
 
-      const hasCompleted = (data ?? []).some((attempt) => {
-        if (attempt.submitted_at) return true;
-        return ["SUBMITTED", "UNDER_REVIEW", "COMPLETED"].includes(attempt.status ?? "");
-      });
+      if (error) {
+        setPsicometricoReady(false);
+        return;
+      }
 
+      const attempts = (data ?? []) as AttemptState[];
+      const hasCompleted = attempts.some((attempt) => Boolean(attempt.submitted_at) || completedStatuses.has(attempt.status ?? ""));
       setPsicometricoReady(hasCompleted);
     };
 
-    loadPsicometricoState();
+    void loadPsicometricoState();
   }, [session, supabase]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.replace("/login");
+  };
 
   if (checkingSession) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-50">
-        <div className="text-slate-600">Cargando panel...</div>
+      <main className="uces-page flex items-center justify-center p-6">
+        <Card className="w-full max-w-sm">
+          <CardContent className="p-6 text-sm text-slate-600">Cargando panel...</CardContent>
+        </Card>
       </main>
     );
   }
 
   const isAdmin = userRole === "admin";
-  const userLabel = profile?.name || profile?.email || session?.user.email;
+  const userLabel = profile?.name || profile?.email || session?.user.email || "Usuario";
+  const totalModules = modules.length;
 
   return (
-    <main className="min-h-screen bg-slate-50">
-      <div className="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-12">
-        <header className="flex flex-col gap-6 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold uppercase text-white">UCES</div>
+    <main className="uces-page">
+      <div className="uces-container space-y-8">
+        <header className="overflow-hidden rounded-3xl bg-slate-950 text-white shadow-xl shadow-slate-300/40">
+          <div className="grid gap-6 p-6 md:grid-cols-[1.5fr_0.85fr] md:p-8">
+            <div className="space-y-5">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-500 font-black">UC</div>
+                <div>
+                  <p className="text-sm font-semibold text-blue-200">UCES Plataforma de Talento</p>
+                  <h1 className="text-3xl font-black tracking-tight">Panel principal</h1>
+                </div>
+                <Badge variant={isAdmin ? "warning" : "info"}>{isAdmin ? "Administrador" : "Postulante"}</Badge>
+              </div>
               <div>
-                <p className="text-sm font-semibold text-blue-700">Plataforma de talento</p>
-                <h1 className="text-2xl font-bold text-slate-900">Panel principal</h1>
+                <p className="text-lg font-semibold">Hola, {userLabel}</p>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
+                  Explora módulos, consulta vacantes y da seguimiento a tus evaluaciones dentro del proceso de reclutamiento universitario.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Button asChild variant="secondary">
+                  <Link href="/perfil">
+                    <UserRound className="h-4 w-4" />
+                    Mi perfil
+                  </Link>
+                </Button>
+                {isAdmin ? (
+                  <Button asChild>
+                    <Link href="/admin">
+                      <ShieldCheck className="h-4 w-4" />
+                      Panel administrativo
+                    </Link>
+                  </Button>
+                ) : null}
+                <Button variant="outline" className="border-white/20 bg-white/10 text-white hover:bg-white hover:text-slate-950" onClick={handleLogout}>
+                  <LogOut className="h-4 w-4" />
+                  Salir
+                </Button>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Button asChild variant="outline">
-                <Link href="/perfil">Mi perfil</Link>
-              </Button>
-              {isAdmin ? (
-                <Button asChild variant="secondary">
-                  <Link href="/admin">Panel Administrativo</Link>
-                </Button>
-              ) : null}
+
+            <div className="grid gap-3 sm:grid-cols-3 md:grid-cols-1">
+              <div className="rounded-2xl bg-white/10 p-4">
+                <p className="text-sm text-slate-300">Módulos activos</p>
+                <p className="mt-1 text-3xl font-black">{totalModules}</p>
+              </div>
+              <div className="rounded-2xl bg-white/10 p-4">
+                <p className="text-sm text-slate-300">Psicométrico</p>
+                <p className="mt-1 text-xl font-black">{psicometricoReady ? "Completado" : "Pendiente"}</p>
+              </div>
+              <div className="rounded-2xl bg-white/10 p-4">
+                <p className="text-sm text-slate-300">Sesión</p>
+                <p className="mt-1 break-all text-sm font-semibold">{profile?.email ?? session?.user.email}</p>
+              </div>
             </div>
-          </div>
-          <div>
-            <p className="text-base font-medium text-slate-900">Hola {userLabel}</p>
-            <p className="text-sm text-slate-600">
-              Explora los módulos disponibles y sigue tus pendientes. Podrás registrar evidencias, revisar convocatorias y
-              mantener comunicación con revisores.
-            </p>
           </div>
         </header>
 
+        {errorMessage ? <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{errorMessage}</div> : null}
+
         {!isAdmin && psicometricoReady === false ? (
-          <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
-            <p className="text-sm font-semibold text-amber-800">Requisito pendiente</p>
-            <p className="mt-1 text-sm text-amber-900">{PSICOMETRICO_REQUIRED_MESSAGE}</p>
-            <Button asChild className="mt-4">
-              <Link href="/psicometrico">Iniciar psicométrico</Link>
-            </Button>
+          <section className="rounded-3xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+                  <ClipboardCheck className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="font-bold text-amber-900">Requisito pendiente</p>
+                  <p className="mt-1 text-sm leading-6 text-amber-900">{PSICOMETRICO_REQUIRED_MESSAGE}</p>
+                </div>
+              </div>
+              <Button asChild>
+                <Link href="/psicometrico">Iniciar psicométrico</Link>
+              </Button>
+            </div>
           </section>
         ) : null}
 
+        <section className="grid gap-4 md:grid-cols-3">
+          <Card>
+            <CardContent className="flex items-center gap-4 p-5">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
+                <LayoutDashboard className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-500">Rol activo</p>
+                <p className="text-xl font-black capitalize text-slate-950">{userRole}</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex items-center gap-4 p-5">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-50 text-orange-700">
+                <BriefcaseBusiness className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-500">Áreas disponibles</p>
+                <p className="text-xl font-black text-slate-950">{totalModules}</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="flex items-center gap-4 p-5">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
+                <ClipboardCheck className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-500">Estado inicial</p>
+                <p className="text-xl font-black text-slate-950">{psicometricoReady ? "Listo" : "Pendiente"}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+
         <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-slate-900">Módulos disponibles</h2>
-            <p className="text-sm font-medium text-blue-700">Rol activo: {userRole}</p>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-wide text-blue-700">Explorar</p>
+              <h2 className="uces-section-title">Módulos disponibles</h2>
+            </div>
+            <p className="text-sm text-slate-500">Selecciona un módulo para ver las vacantes publicadas.</p>
           </div>
+
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {loadingModules ? (
-              <div className="col-span-full rounded-xl border border-dashed border-slate-200 bg-white p-6 text-center text-slate-600">
-                Cargando módulos...
-              </div>
+              <Card className="col-span-full border-dashed bg-white/80">
+                <CardContent className="p-8 text-center text-sm text-slate-600">Cargando módulos...</CardContent>
+              </Card>
             ) : modules.length === 0 ? (
-              <div className="col-span-full rounded-xl border border-dashed border-slate-200 bg-white p-6 text-center text-slate-600">
-                No hay módulos disponibles por el momento.
-              </div>
+              <Card className="col-span-full border-dashed bg-white/80">
+                <CardContent className="p-8 text-center text-sm text-slate-600">No hay módulos disponibles por el momento.</CardContent>
+              </Card>
             ) : (
               modules.map((module) => (
-                <Card key={module.id} className="border-slate-100 shadow-md">
+                <Card key={module.id} className="group overflow-hidden bg-white/95 transition hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-300/50">
                   <CardHeader>
-                    <CardTitle className="text-slate-900">{module.name}</CardTitle>
-                    <CardDescription className="text-slate-700">{module.description}</CardDescription>
+                    <div className="mb-2 flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 transition group-hover:bg-blue-600 group-hover:text-white">
+                      <BriefcaseBusiness className="h-5 w-5" />
+                    </div>
+                    <CardTitle>{module.name}</CardTitle>
+                    <CardDescription>{module.description || "Consulta las vacantes y evaluaciones disponibles para esta área."}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <Button asChild className="w-full" variant="outline">
-                      <Link href={`/modulos/${module.id}`}>Entrar</Link>
+                      <Link href={`/modulos/${module.id}`}>
+                        Entrar al módulo
+                        <ArrowRight className="h-4 w-4" />
+                      </Link>
                     </Button>
                   </CardContent>
                 </Card>

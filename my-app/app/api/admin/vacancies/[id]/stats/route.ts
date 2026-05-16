@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { requireAdmin } from "../../../utils";
+import { requireAdmin } from "@/app/api/admin/utils";
 
 type Params = { params: Promise<{ id: string }> };
 
