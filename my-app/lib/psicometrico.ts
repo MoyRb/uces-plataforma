@@ -11,6 +11,11 @@ type AttemptState = {
 
 const COMPLETED_STATUSES = new Set(["SUBMITTED", "UNDER_REVIEW", "COMPLETED"]);
 
+type AttemptWithApplication = AttemptState & {
+  application: { user_id: string } | { user_id: string }[] | null;
+};
+
+
 export const isPsicometricoCompletedAttempt = (attempt: Pick<AttemptState, "status" | "submitted_at">) => {
   if (attempt.submitted_at) return true;
   return COMPLETED_STATUSES.has(attempt.status ?? "");
@@ -28,7 +33,7 @@ export async function getPsicometricoAttemptState(supabase: SupabaseClient, user
     return { error: error.message, completed: false, pendingAttemptId: null as string | null };
   }
 
-  const typedAttempts = ((attempts ?? []) as (AttemptState & { application: { user_id: string } })[]).map((attempt) => ({
+  const typedAttempts = ((attempts ?? []) as AttemptWithApplication[]).map((attempt) => ({
     id: attempt.id,
     status: attempt.status,
     submitted_at: attempt.submitted_at,

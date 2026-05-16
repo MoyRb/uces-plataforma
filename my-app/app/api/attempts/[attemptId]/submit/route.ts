@@ -3,6 +3,17 @@ import { NextResponse } from "next/server";
 import { calculatePsicometricoSummary } from "@/lib/psicometricoResults";
 import { supabaseServer } from "@/lib/supabaseServer";
 
+type AttemptWithApplication = {
+  id: string;
+  assessment_id: string;
+  deadline_at: string;
+  submitted_at: string | null;
+  application:
+    | { user_id: string }
+    | { user_id: string }[]
+    | null;
+};
+
 const isMissingColumnError = (message?: string) => {
   if (!message) return false;
   const normalized = message.toLowerCase();
@@ -29,13 +40,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ att
     .from("attempts")
     .select("id, assessment_id, deadline_at, submitted_at, application:applications!inner(user_id)")
     .eq("id", attemptId)
-    .maybeSingle();
+    .maybeSingle<AttemptWithApplication>();
 
   if (!attempt) {
     return NextResponse.json({ error: "Intento no encontrado" }, { status: 404 });
   }
 
-  if (attempt.application.user_id !== userData.user.id) {
+  const application = Array.isArray(attempt.application) ? attempt.application[0] : attempt.application;
+
+  if (!application || application.user_id !== userData.user.id) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 
