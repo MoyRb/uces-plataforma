@@ -11,8 +11,9 @@ import { formatBytes } from "@/lib/format";
 import { getRoleForSession } from "@/lib/auth";
 import { supabaseBrowser } from "@/lib/supabaseClient";
 import { PsicometricoSummary } from "@/lib/psicometricoResults";
+import type { ReviewDecision } from "@/lib/reviewDecision";
 
-type Decision = "APPROVED" | "REJECTED";
+type Decision = ReviewDecision;
 
 type AttemptDetail = {
   id: string;

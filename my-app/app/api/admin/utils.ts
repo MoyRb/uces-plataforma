@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
 import { supabaseServer } from "@/lib/supabaseServer";
+import { isReviewDecision, type ReviewDecision } from "@/lib/reviewDecision";
 
 type AdminContext = {
   supabase: ReturnType<typeof supabaseServer>;
@@ -84,8 +85,11 @@ export const normalizedAttemptStatus = (value: unknown) => {
 
 export const ALLOWED_ATTEMPT_STATUSES = ["IN_PROGRESS", "SUBMITTED", "UNDER_REVIEW", "COMPLETED"] as const;
 
-export const normalizedDecision = (value: unknown) => {
+export const normalizedDecision = (value: unknown): ReviewDecision | null => {
   if (typeof value !== "string") return null;
   const normalized = value.toUpperCase();
-  return ["APPROVED", "REJECTED"].includes(normalized) ? normalized : null;
+  if (isReviewDecision(normalized)) {
+    return normalized;
+  }
+  return null;
 };
