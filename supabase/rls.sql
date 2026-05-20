@@ -15,7 +15,21 @@ begin
   where ur.user_id = auth.uid()
   limit 1;
 
-  return coalesce(current_role, 'user');
+  if current_role is not null then
+    return current_role;
+  end if;
+
+  select p.role
+    into current_role
+  from public.profiles p
+  where p.user_id = auth.uid()
+  limit 1;
+
+  if current_role = 'admin' then
+    return 'admin';
+  end if;
+
+  return 'user';
 end;
 $$;
 

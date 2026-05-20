@@ -14,6 +14,14 @@ export const getRoleForSession = async (supabase: SupabaseClient): Promise<Profi
   const { data, error } = await supabase.rpc("get_my_role");
 
   if (error) {
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[auth.getRoleForSession] get_my_role RPC failed", {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+      });
+    }
     return "user";
   }
 
