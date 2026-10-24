@@ -1,0 +1,47 @@
+sequenceDiagram
+    actor C as Candidato
+    participant B as postular.tsx (ApplyButton)
+    participant AP as apply/route.ts
+    participant DB as Supabase DB
+
+    C->>B: Clic en "Postularme"
+    B->>AP: POST /api/vacancies/[id]/apply (Authorization: Bearer JWT)
+
+    AP->>AP: Paso 1 — Extrae JWT del header
+    AP->>AP: supabase.auth.getUser(token)
+    alt JWT inválido o expirado
+        AP-->>B: 401 Unauthorized
+    end
+
+    AP->>AP: Paso 2 — getPsicometricoAttemptState(userId)
+    alt psicometricoState.completed === false
+        AP-->>B: 403 {requiresPsychometric: true}
+        B->>B: Redirige a /psicometrico
+    end
+
+    AP->>DB: Paso 3 — SELECT vacancies WHERE id = vacancyId
+    alt vacancy.status !== "open"
+        AP-->>B: 400 "Vacante no disponible"
+    end
+
+    AP->>DB: Paso 4 — SELECT assessments WHERE vacancy_id = vacancyId
+    alt No existe assessment
+        AP-->>B: 500 "Assessment no configurado"
+    end
+
+    AP->>DB: Paso 5 — SELECT applications WHERE user_id AND vacancy_id
+    alt application ya existe
+        AP->>AP: Reutiliza application existente
+    else application no existe
+        AP->>DB: INSERT applications {user_id, vacancy_id, status: 'pending'}
+    end
+
+    AP->>DB: Paso 6 — SELECT attempts WHERE application_id AND assessment_id
+    alt attempt ya existe
+        AP->>AP: Reutiliza attempt existente
+    else attempt no existe
+        AP->>DB: INSERT attempts {application_id, assessment_id, deadline_at: now()+duration}
+    end
+
+    AP-->>B: 200 {attemptId}
+    B->>B: Redirige a /evaluacion/[attemptId]

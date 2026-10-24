@@ -1,0 +1,19 @@
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#D6E4F0', 'primaryBorderColor': '#2980B9'}}}%%
+graph TD
+    subgraph BROWSER["NAVEGADOR DEL USUARIO"]
+        CC["**Client Components** ('use client')\npanel/page · evaluacion/cliente · postular · perfil\n• Estado local: useState, useEffect\n• Sesión vía supabaseBrowser() + anon key\n• Envía requests HTTP con Bearer JWT"]
+    end
+
+    subgraph SERVER["SERVIDOR NEXT.JS (Edge/Node)"]
+        SC["**Server Components**\nevaluacion/[attemptId]/page.tsx\nresultado/[attemptId]/page.tsx\nadmin/attempts/[id]/page.tsx\n• supabaseServer() (service_role)\n• Sin exposición al cliente"]
+        RH["**Route Handlers**\napi/auth/register\napi/vacancies/[id]/apply\napi/attempts/[id]/answers · /submit\napi/admin/** (13 endpoints)\n• JWT validation · requireAdmin()\n• supabaseServer()"]
+    end
+
+    subgraph SUPABASE["SUPABASE (BaaS)"]
+        AUTH["**Supabase Auth**\n• JWT emisión\n• getUser()\n• admin API"]
+        DB["**PostgreSQL 16**\n• 13 tablas\n• RLS en todas\n• get_my_role()"]
+        STOR["**Storage**\n• Bucket: 'evidences'\n• Acceso privado\n• Signed URLs"]
+    end
+
+    CC -- "HTTPS / fetch()" --> SERVER
+    SERVER -- "SDK @supabase/supabase-js" --> SUPABASE

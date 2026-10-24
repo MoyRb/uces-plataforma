@@ -1,0 +1,33 @@
+sequenceDiagram
+    actor C as Candidato
+    participant B as cliente.tsx (handleUpload)
+    participant ST as Supabase Storage (bucket evidences)
+    participant DB as Supabase DB (evidence_uploads)
+
+    C->>B: Selecciona archivo (input accept="image/*,application/pdf")
+    B->>B: Valida que file !== null
+    B->>B: Construye storagePath: {attemptId}/{Date.now()}-{Math.random()}.{ext}
+    B->>B: setUploading(true)
+
+    B->>ST: storage.from("evidences").upload(storagePath, file, {upsert: false})
+    alt Falla el upload
+        ST-->>B: Error de Storage
+        B->>B: setUploadError(mensaje)
+        B->>B: setUploading(false)
+    end
+
+    ST-->>B: {path: storagePath}
+
+    B->>DB: INSERT evidence_uploads {attempt_id, path: storagePath, file_name, mime_type}
+    alt Falla el INSERT
+        DB-->>B: Error de base de datos
+        B->>B: setUploadError("No se pudo registrar la evidencia")
+    end
+
+    DB-->>B: {id, attempt_id, path, ...}
+
+    B->>B: Actualiza estado local: agrega evidencia a lista
+    B->>B: setUploading(false)
+    B-->>C: Muestra "Ver evidencia" (getPublicUrl para previsualización)
+
+    Note over B,ST: El acceso al archivo por el admin usa<br/>createSignedUrl(path, 3600) en el panel admin

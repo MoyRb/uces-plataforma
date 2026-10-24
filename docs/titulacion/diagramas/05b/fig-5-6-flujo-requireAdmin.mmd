@@ -1,0 +1,19 @@
+flowchart TD
+    A[Route Handler recibe Request] --> B{Authorization header\ncomienza con 'Bearer '?}
+    B -- No --> C[401 No autenticado]
+    B -- Sí --> D[Extrae token JWT del header]
+    D --> E[supabase.auth.getUser - token -]
+    E --> F{JWT válido y\nusuario existe?}
+    F -- No --> G[401 Sesión inválida]
+    F -- Sí --> H["Crea supabaseAsUser\n(anonKey + Bearer header)"]
+    H --> I["supabaseAsUser.rpc('get_my_role')"]
+    I --> J{roleData === 'admin'?}
+    J -- No --> K[403 Acceso restringido]
+    J -- Sí --> L["Retorna {supabase: serviceClient, userId}"]
+    L --> M[Route Handler continúa\ncon cliente privilegiado]
+
+    style C fill:#fca5a5
+    style G fill:#fca5a5
+    style K fill:#fca5a5
+    style L fill:#86efac
+    style M fill:#86efac

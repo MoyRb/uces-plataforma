@@ -1,0 +1,13 @@
+# Abstract
+
+This work documents the development and implementation of UCES Plataforma de Talento, a Minimum Viable Product (MVP) web application designed to digitalize the recruitment and pre-screening process of the Human Resources department at the Universidad Capital de Estudios Superiores (UCES), Zamora, Michoacán, Mexico. The original problem consisted of the absence of a structured evaluation stage prior to the in-person interview, which resulted in high administrative workload and candidate review without standardized competency data.
+
+The general objective was to develop a functional platform that centralizes and digitalizes the main activities of the process, including candidate registration with cryptographic CURP protection, administration of a psychometric assessment based on the Big Five personality model, time-limited knowledge evaluations, practical evidence uploads, and administrative review of results. The development methodology was evolutionary prototyping, carried out in eight documented iterations between December 2025 and May 2026, using as its specification baseline the analysis and design document previously produced by Arciniega Robles (2026).
+
+The primary technologies used were Next.js 16.1.1 with App Router, TypeScript 5, React 19, Tailwind CSS, shadcn/ui, Supabase (PostgreSQL 16, Auth, Storage), and deployment on Vercel. The relational data model comprises 13 tables with Row Level Security enabled on all of them, and the API exposes 13 Route Handlers protected through server-side JWT verification and role confirmation.
+
+Functional validation was conducted through 22 documented test cases: 16 approved (72.7%), 2 partially approved (9.1%), 3 partial due to the absence of a dedicated REST endpoint in the relevant components (13.6%), and 1 blocked due to environment constraints (4.5%). Five discrepancies between the Trabajo A design and the resulting implementation were identified, characterized, and documented. The main MVP limitations include the absence of automatic filtering by psychometric classification, the inoperative reviewer role, the lack of automated notifications, and the inability to test session timeout behavior under extended conditions.
+
+The system fulfills the general objective and five of the seven specific objectives fully; the remaining two are fulfilled with documented caveats related to discrepancies D-01 and D-02. The MVP is concluded to constitute a solid, functional, and extensible technical foundation for the digitalized management of UCES's recruitment process.
+
+**Keywords:** web platform, university recruitment, evolutionary prototyping, psychometric assessment, Supabase, Next.js, MVP.

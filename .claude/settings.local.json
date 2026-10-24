@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(where:*)",
+      "Bash(python:*)",
+      "Bash(python3:*)",
+      "Bash(node:*)",
+      "Bash(npm run:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx eslint:*)",
+      "Bash(curl:*)",
+      "Read(//c/tmp/**)",
+      "Read(//c/Users/moise/AppData/Local/Temp//**)",
+      "Bash(xargs grep:*)",
+      "Bash(grep:*)",
+      "Bash(for f in capitulos/*.md)",
+      "Bash(do echo \"=== $f ===\")",
+      "Read(//c/uces-plataforma/my-app/**)",
+      "Bash(done)",
+      "Bash(wc -w capitulos/*.md)",
+      "Bash(ls:*)",
+      "Bash(npx:*)",
+      "Bash(for f in *.md)",
+      "Bash(do echo -n \"$f: \")",
+      "Read(//c/uces-plataforma/docs/titulacion/**)",
+      "Bash(netstat:*)",
+      "Bash(pandoc:*)",
+      "Bash(powershell:*)",
+      "Bash(dir:*)",
+      "Bash(pip install:*)"
+    ]
+  }
+}

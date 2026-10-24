@@ -1,0 +1,46 @@
+sequenceDiagram
+    actor C as Candidato
+    participant B as Navegador (cliente.tsx)
+    participant R as register/route.ts
+    participant A as Supabase Auth
+    participant DB as Supabase DB
+
+    C->>B: Llena formulario (nombre, email, CURP, password)
+    B->>B: Valida formato CURP (regex)
+    B->>R: POST /api/auth/register {nombre, email, curp, password}
+
+    R->>R: Paso 1 — Valida CURP con curpPattern
+    R->>R: hashCurpHmac(secret, curp)
+    R->>DB: SELECT curp_hashes WHERE hash = ?
+    alt CURP ya registrada
+        R-->>B: 409 Conflict "CURP ya registrada"
+    end
+
+    R->>A: Paso 2 — admin.createUser({email, password, email_confirm: true})
+    alt Falla creación de usuario
+        R-->>B: 500 "No se pudo crear la cuenta"
+    end
+
+    R->>DB: Paso 3 — INSERT profiles {user_id, nombre}
+    alt Falla INSERT profiles
+        R->>A: admin.deleteUser(userId) [rollback]
+        R-->>B: 500 "No se pudo crear el perfil"
+    end
+
+    R->>DB: Paso 4a — INSERT curp_hashes {user_id, hash}
+    alt Falla INSERT curp_hashes
+        R->>DB: DELETE profiles WHERE user_id = ?
+        R->>A: admin.deleteUser(userId) [rollback]
+        R-->>B: 500 "No se pudo registrar la CURP"
+    end
+
+    R->>DB: Paso 4b — INSERT user_roles {user_id, role: 'user'}
+    alt Falla INSERT user_roles
+        R->>DB: DELETE curp_hashes WHERE user_id = ?
+        R->>DB: DELETE profiles WHERE user_id = ?
+        R->>A: admin.deleteUser(userId) [rollback]
+        R-->>B: 500 "No se pudo asignar el rol"
+    end
+
+    R-->>B: 201 Created {message: "Registro exitoso"}
+    B->>B: Redirige a /login

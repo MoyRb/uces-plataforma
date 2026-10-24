@@ -1,0 +1,28 @@
+sequenceDiagram
+    participant UI as admin/attempts/[id]/page.tsx
+    participant PATCH as PATCH /api/admin/attempts/[id]
+    participant DB_A as PostgreSQL (attempts)
+    participant DB_R as PostgreSQL (reviews)
+
+    UI->>PATCH: PATCH {status, decision, notes} + Bearer JWT
+    PATCH->>PATCH: requireAdmin() → verifica JWT y rol
+    PATCH->>DB_A: UPDATE attempts SET status = ? WHERE id = ?
+    DB_A-->>PATCH: OK
+
+    alt decision o notes presentes en el body
+        PATCH->>DB_R: SELECT reviews WHERE attempt_id = ?
+        alt review ya existe
+            DB_R-->>PATCH: {id: reviewId}
+            PATCH->>DB_R: UPDATE reviews SET decision, notes WHERE id = reviewId
+        else no existe review previo
+            DB_R-->>PATCH: null
+            PATCH->>DB_R: INSERT INTO reviews {attempt_id, reviewer_id, decision, notes}
+        end
+        alt reviews tabla no existe (error 42P01 / PGRST205)
+            PATCH->>DB_A: UPDATE attempts SET decision, reviewer_notes WHERE id = ?
+            Note over PATCH,DB_A: Fallback solo si reviews no existe en esquema
+        end
+    end
+
+    PATCH->>PATCH: getAttemptDetail() — carga estado actualizado
+    PATCH-->>UI: {data: attemptActualizado, warning?: string}

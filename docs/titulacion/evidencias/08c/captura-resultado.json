@@ -1,0 +1,43 @@
+{
+  "obtenidas": [
+    "EV-5A-02",
+    "EV-5A-07",
+    "EV-5A-05",
+    "EV-5A-06",
+    "EV-5A-09",
+    "EV-5A-11",
+    "EV-5A-12",
+    "EV-5B-13",
+    "EV-5A-15",
+    "EV-5B-15",
+    "EV-5A-19",
+    "EV-5B-08",
+    "EV-5B-01",
+    "EV-6C-04",
+    "EV-6C-06",
+    "EV-6C-07"
+  ],
+  "pendientes": [
+    "EV-5B-02",
+    "EV-5B-03"
+  ],
+  "bloqueadas": [
+    {
+      "id": "EV-5A-04",
+      "razon": "Requiere Supabase Studio (13 tablas)"
+    },
+    {
+      "id": "EV-5B-12",
+      "razon": "Requiere Supabase Studio (tabla questions)"
+    },
+    {
+      "id": "EV-6C-01",
+      "razon": "Requiere Supabase Studio (Auth dashboard)"
+    },
+    {
+      "id": "EV-6C-02",
+      "razon": "Requiere Supabase Studio (user_roles table)"
+    }
+  ],
+  "fecha": "2026-10-23T15:39:51.437Z"
+}

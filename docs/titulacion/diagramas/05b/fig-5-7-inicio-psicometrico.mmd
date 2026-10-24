@@ -1,0 +1,18 @@
+flowchart TD
+    A["/psicometrico — montaje del componente"] --> B["POST /api/psicometrico/start\n(Bearer JWT)"]
+    B --> C["ensurePsicometricoAttempt(supabase, userId)"]
+    C --> D["getPsicometricoAttemptState()\nConsulta attempts WHERE assessment_id = UUID_FIJO"]
+    D --> E{¿Existe intento\ncon submitted_at\no status completado?}
+    E -- Sí --> F["{completed: true}"]
+    F --> G[Redirect a /panel]
+    E -- No --> H{¿Existe intento\nen progreso?}
+    H -- Sí --> I["Retorna {completed: false, attemptId: pendiente}"]
+    H -- No --> J["SELECT assessments\nWHERE id = UUID_FIJO"]
+    J --> K["SELECT/INSERT applications\n(user_id, vacancy_id de vacante interna)"]
+    K --> L["INSERT attempts\n{application_id, assessment_id, started_at, deadline_at}"]
+    L --> M["Retorna {completed: false, attemptId: nuevo}"]
+    I --> N["Redirect a /evaluacion/attemptId"]
+    M --> N
+
+    style G fill:#86efac
+    style N fill:#86efac

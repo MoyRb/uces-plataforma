@@ -1,0 +1,2135 @@
+INSTITUTO TECNOLÓGICO DE ESTUDIOS SUPERIORES DE ZAMORA
+Ingeniería en Sistemas Computacionales
+ANÁLISIS Y DISEÑO DE UN SISTEMA WEB DE RECLUTAMIENTO DE PERSONAL PARA LA UNIVERSIDAD CAPITAL DE ESTUDIOS SUPERIORES
+Proyecto de titulación que para obtener el título de Ingeniero en Sistemas Computacionales
+Presenta Arciniega Robles Francisco Daniel
+Asesor Francisco Rodríguez Díaz
+Modalidad de titulación: Proyecto innovador
+Zamora, Michoacán, diciembre 2026
+
+Resumen
+El presente trabajo documenta el análisis y diseño de un sistema web de reclutamiento de personal desarrollado para el área de Recursos Humanos de la Universidad Capital de Estudios Superiores (UCES), ubicada en Zamora, Michoacán. Antes del proyecto, la universidad difundía sus vacantes en redes sociales y recibía a los interesados por teléfono o de forma presencial; la revisión de currículums y las entrevistas recaían en una sola persona, y la información de cada candidatura quedaba dispersa en archivos y mensajes.
+Para atender esta situación se siguió un modelo de prototipado evolutivo, con reuniones de revisión periódicas con la responsable de Recursos Humanos. Como resultado se definió un sistema web, apoyado en servicios de autenticación, base de datos PostgreSQL y almacenamiento de archivos, que permite a los postulantes registrarse con validación de CURP, responder un cuestionario base, consultar vacantes agrupadas por módulos, presentar evaluaciones con tiempo límite y cargar evidencias; al administrador le permite configurar módulos, vacantes y evaluaciones, revisar cada intento y registrar decisiones y observaciones.
+El documento integra el estudio de factibilidad, la especificación de requisitos con base en los formatos IEEE 1362 e IEEE 830, dieciocho requisitos funcionales, catorce casos de uso, diagramas UML de casos de uso, actividad, estados y secuencia, la arquitectura del sistema, el diseño de quince interfaces y nueve salidas, el modelo entidad-relación, el modelo relacional y el diccionario de datos de trece tablas, así como una matriz de trazabilidad entre necesidades, requisitos y componentes de diseño.
+Palabras clave: análisis de sistemas, diseño de software, reclutamiento de personal, aplicación web, ingeniería de requisitos, base de datos relacional.
+2
+
+Índice
+Resumen.......................................................................................................................................... 2 Introducción general ..................................................................................................................... 11 Capítulo I. Generalidades del proyecto......................................................................................... 13
+1.1 Descripción de la institución............................................................................................. 13 1.2 Antecedentes del proyecto ................................................................................................ 14 1.3 Problemas por resolver ..................................................................................................... 14 1.4 Objetivos ........................................................................................................................... 15
+1.4.1 Objetivo general....................................................................................................... 15 1.4.2 Objetivos específicos ............................................................................................... 16 1.5 Justificación ...................................................................................................................... 16 1.6 Hipótesis ........................................................................................................................... 17 1.7 Alcances y delimitaciones................................................................................................. 17 1.8 Conclusiones del capítulo ................................................................................................. 18 Capítulo II. Marco teórico............................................................................................................. 19 2.1 Reclutamiento y selección de personal ............................................................................. 19 2.1.1 Definición ................................................................................................................ 19 2.1.2 Etapas del proceso.................................................................................................... 19 2.1.3 Tipos de reclutamiento............................................................................................. 20 2.1.4 Ventajas y desventajas del reclutamiento en línea................................................... 20 2.1.5 Ejemplos de plataformas de reclutamiento .............................................................. 21 2.1.6 Apoyo tecnológico a Recursos Humanos ................................................................ 21 2.2 Sistemas de información ................................................................................................... 21 2.2.1 Definición y componentes ....................................................................................... 21 2.2.2 Datos e información para el seguimiento................................................................. 22 2.3 Aplicaciones web .............................................................................................................. 22 2.3.1 Definición ................................................................................................................ 22 2.3.2 Funcionamiento........................................................................................................ 22 2.3.3 Evolución histórica .................................................................................................. 23 2.4 Metodologías para el análisis y diseño de software .......................................................... 23 2.4.1 Modelo en cascada ................................................................................................... 23 2.4.2 Modelo en espiral..................................................................................................... 24 2.4.3 Modelo de prototipos ............................................................................................... 24
+3
+
+2.4.4 Modelo incremental ................................................................................................. 25 2.4.5 Comparación de metodologías................................................................................. 25 2.5 Análisis de software .......................................................................................................... 25 2.5.1 Definición ................................................................................................................ 25 2.5.2 Requisitos de software ............................................................................................. 26 2.5.3 Pasos del análisis de software .................................................................................. 26 2.5.4 Técnicas de levantamiento de información.............................................................. 27 2.5.5 Trazabilidad ............................................................................................................. 27 2.6 Modelado con el Lenguaje Unificado de Modelado......................................................... 28 2.6.1 Modelos y diagramas ............................................................................................... 28 2.6.2 Diagramas utilizados................................................................................................ 28 2.7 Diseño de software............................................................................................................ 28 2.7.1 Definición ................................................................................................................ 28 2.7.2 Arquitectura de software.......................................................................................... 29 2.7.3 Diseño de interfaz .................................................................................................... 29 2.7.4 Diseño de datos ........................................................................................................ 29 2.7.5 Diseño de salidas...................................................................................................... 30 2.7.6 Importancia del diseño ............................................................................................. 30 2.8 Bases de datos relacionales ............................................................................................... 30 2.8.1 Modelo entidad-relación .......................................................................................... 30 2.8.2 Modelo relacional .................................................................................................... 30 2.8.3 Diccionario de datos ................................................................................................ 31 2.9 Experiencia de usuario ...................................................................................................... 31 2.9.1 Definición ................................................................................................................ 31 2.9.2 Métodos de experiencia de usuario.......................................................................... 31 2.9.3 Accesibilidad en formularios ................................................................................... 32 2.9.4 Importancia .............................................................................................................. 32 2.10 Seguridad y control de acceso......................................................................................... 32 2.10.1 Autenticación y autorización ................................................................................. 32 2.10.2 Control de acceso basado en roles ......................................................................... 32 2.10.3 Huellas mediante HMAC....................................................................................... 32 2.11 Conclusiones del capítulo ............................................................................................... 33 Capítulo III. Desarrollo ................................................................................................................. 34 3.1 Metodología para realizar el análisis y diseño de software .............................................. 34
+4
+
+3.2 Análisis de software .......................................................................................................... 36 3.2.1 Requerimientos del cliente....................................................................................... 36 3.2.2 Estudio de factibilidad del proyecto ........................................................................ 37 3.2.3 Requerimientos del sistema formato IEEE 1362 ..................................................... 41 3.2.4 Especificación de requisitos de software formato IEEE 830 ................................... 44 3.2.5 Casos de uso............................................................................................................. 49 CU-01 Registrar cuenta..................................................................................................... 51 CU-02 Iniciar y cerrar sesión ............................................................................................ 52 CU-03 Consultar módulos y vacantes............................................................................... 53 CU-04 Completar cuestionario base ................................................................................. 53 CU-05 Postularse a una vacante ....................................................................................... 54 CU-06 Responder una evaluación .................................................................................... 55 CU-07 Cargar evidencia ................................................................................................... 55 CU-08 Enviar evaluación.................................................................................................. 56 CU-09 Consultar perfil y seguimiento .............................................................................. 57 CU-10 Administrar módulos............................................................................................. 57 CU-11 Administrar vacantes............................................................................................. 58 CU-12 Configurar evaluaciones y preguntas .................................................................... 59 CU-13 Consultar intentos y evidencias............................................................................. 59 CU-14 Registrar decisión y observaciones ....................................................................... 60 3.2.6 Modelos de procesos y estados ................................................................................ 60
+3.3 Diseño de software............................................................................................................ 63 3.3.1 Arquitectura de diseño ............................................................................................. 63 3.3.2 Diseño de interfaz .................................................................................................... 67 3.3.3 Diseño de salidas...................................................................................................... 84
+3.4 Diseño de datos ................................................................................................................. 86 3.4.1 Estructura de datos ................................................................................................... 86 3.4.2 Diagrama entidad-relación....................................................................................... 87 3.4.3 Diagrama relacional ................................................................................................. 89 3.4.4 Diccionario de datos ................................................................................................ 91
+3.5 Trazabilidad del análisis y diseño ..................................................................................... 96 3.6 Conclusiones del capítulo ................................................................................................. 97 Capítulo IV. Resultados ................................................................................................................ 99 4.1 Sistema definido................................................................................................................ 99
+5
+
+4.2 Resultados por objetivo específico ................................................................................. 100 4.3 Verificación de la hipótesis............................................................................................. 100 4.4 Alcance de los resultados................................................................................................ 102 Conclusiones generales ............................................................................................................... 103 Trabajo futuro ............................................................................................................................. 105 Competencias desarrolladas........................................................................................................ 106 Fuentes de información............................................................................................................... 107 Glosario....................................................................................................................................... 111 Anexo A. Correspondencia entre las necesidades iniciales y el alcance del sistema ................. 113 Anexo B. Cuestionario de satisfacción para Recursos Humanos ............................................... 114
+6
+
+Índice de tablas
+Tabla 1 Áreas académicas y programas informados................................................................... 13 Tabla 2 Necesidades identificadas en el proceso previo ............................................................. 15 Tabla 3 Ventajas y desventajas del reclutamiento en línea ......................................................... 20 Tabla 4 Comparación de modelos de proceso ............................................................................. 25 Tabla 5 Técnicas de levantamiento de información..................................................................... 27 Tabla 6 Fases del prototipado evolutivo y productos del proyecto ............................................. 36 Tabla 7 Actores y responsabilidades ........................................................................................... 37 Tabla 8 Recursos técnicos para el desarrollo y la operación...................................................... 38 Tabla 9 Estimación de costos del proyecto .................................................................................. 39 Tabla 10 Escenarios operativos del sistema ................................................................................ 43 Tabla 11 Características de los usuarios..................................................................................... 45 Tabla 12 Catálogo de requisitos funcionales............................................................................... 46 Tabla 13 Requisitos no funcionales ............................................................................................. 47 Tabla 14 Reglas de negocio ......................................................................................................... 48 Tabla 15 Catálogo de casos de uso.............................................................................................. 51 Tabla 16 Especificación de CU-01 .............................................................................................. 51 Tabla 17 Especificación de CU-02 .............................................................................................. 52 Tabla 18 Especificación de CU-03 .............................................................................................. 53 Tabla 19 Especificación de CU-04 .............................................................................................. 53 Tabla 20 Especificación de CU-05 .............................................................................................. 54 Tabla 21 Especificación de CU-06 .............................................................................................. 55 Tabla 22 Especificación de CU-07 .............................................................................................. 55 Tabla 23 Especificación de CU-08 .............................................................................................. 56 Tabla 24 Especificación de CU-09 .............................................................................................. 57 Tabla 25 Especificación de CU-10 .............................................................................................. 57 Tabla 26 Especificación de CU-11 .............................................................................................. 58 Tabla 27 Especificación de CU-12 .............................................................................................. 59 Tabla 28 Especificación de CU-13 .............................................................................................. 59 Tabla 29 Especificación de CU-14 .............................................................................................. 60 Tabla 30 Estados y decisiones por entidad .................................................................................. 62 Tabla 31 Responsabilidades de los componentes ........................................................................ 64 Tabla 32 Inventario de interfaces ................................................................................................ 68
+7
+
+Tabla 33 Catálogo de salidas....................................................................................................... 84 Tabla 34 Etiquetas del resumen generado ................................................................................... 85 Tabla 35 Entidades del esquema público..................................................................................... 86 Tabla 36 Claves foráneas y acciones al eliminar ........................................................................ 90 Tabla 37 Restricciones de unicidad y validación......................................................................... 90 Tabla 38 Diccionario de profiles ................................................................................................. 91 Tabla 39 Diccionario de user_roles............................................................................................. 92 Tabla 40 Diccionario de curp_hashes ......................................................................................... 92 Tabla 41 Diccionario de modules ................................................................................................ 92 Tabla 42 Diccionario de vacancies.............................................................................................. 92 Tabla 43 Diccionario de applications.......................................................................................... 93 Tabla 44 Diccionario de assessments .......................................................................................... 93 Tabla 45 Diccionario de questions .............................................................................................. 93 Tabla 46 Diccionario de practical_tasks ..................................................................................... 94 Tabla 47 Diccionario de attempts ................................................................................................ 94 Tabla 48 Diccionario de answers ................................................................................................ 95 Tabla 49 Diccionario de evidence_uploads................................................................................. 95 Tabla 50 Diccionario de reviews ................................................................................................. 95 Tabla 51 Matriz de trazabilidad funcional .................................................................................. 96 Tabla 52 Correspondencia de objetivos y productos................................................................... 97 Tabla 53 Comparación del proceso anterior y del proceso propuesto........................................ 99 Tabla 54 Resultados obtenidos por objetivo específico ............................................................. 100 Tabla 55 Indicadores para la verificación de la hipótesis......................................................... 100 Tabla 56 Términos y abreviaturas ............................................................................................. 111 Tabla 57 Necesidades iniciales y alcance documentado ........................................................... 113 Tabla 58 Cuestionario de satisfacción....................................................................................... 114
+8
+
+Índice de figuras
+Figura 1 Ciclo de prototipado evolutivo aplicado al proyecto .................................................... 35 Figura 2 Diagrama de casos de uso del sistema.......................................................................... 50 Figura 3 Diagrama de actividad del proceso principal de participación ................................... 61 Figura 4 Diagrama de estados del intento de evaluación ........................................................... 62 Figura 5 Arquitectura lógica del sistema..................................................................................... 64 Figura 6 Diagrama de despliegue................................................................................................ 65 Figura 7 Diagrama de secuencia para iniciar una postulación .................................................. 66 Figura 8 Diagrama de secuencia para enviar y revisar una evaluación..................................... 67 Figura 9 Mapa de navegación del sistema................................................................................... 68 Figura 10 Pantalla de inicio (UI-01) ........................................................................................... 69 Figura 11 Formulario de inicio de sesión (UI-02) ...................................................................... 70 Figura 12 Formulario de registro (UI-03)................................................................................... 71 Figura 13 Panel principal del postulante (UI-04) ....................................................................... 71 Figura 14 Catálogo de módulos (UI-04)...................................................................................... 72 Figura 15 Vacantes del módulo Tecnología (UI-05) ................................................................... 72 Figura 16 Detalle de la vacante (UI-06)...................................................................................... 73 Figura 17 Cuestionario base en curso (UI-07) ............................................................................ 74 Figura 18 Reactivos del cuestionario base (UI-07) ..................................................................... 74 Figura 19 Evaluación con sección teórica y práctica (UI-07) .................................................... 75 Figura 20 Confirmación del envío (UI-08) .................................................................................. 76 Figura 21 Perfil del postulante (UI-09) ....................................................................................... 76 Figura 22 Panel de una cuenta administrativa (UI-04)............................................................... 77 Figura 23 Resumen administrativo (UI-10) ................................................................................. 77 Figura 24 Actividad reciente y accesos de gestión (UI-10) ......................................................... 78 Figura 25 Administración de módulos (UI-11)............................................................................ 79 Figura 26 Administración de vacantes (UI-12) ........................................................................... 80 Figura 27 Administración de evaluaciones y preguntas (UI-13)................................................. 81 Figura 28 Listado de intentos (UI-14) ......................................................................................... 82 Figura 29 Resumen de un intento (UI-15) ................................................................................... 82 Figura 30 Indicadores del cuestionario base (UI-15) ................................................................. 83 Figura 31 Acciones de revisión y registros asociados (UI-15).................................................... 84 Figura 32 Diagrama entidad-relación en notación de Chen ....................................................... 88
+9
+
+Figura 33 Diagrama relacional de la base de datos ................................................................... 89 10
+
+Introducción general
+La gestión del reclutamiento requiere reunir información sobre los puestos disponibles y sobre las personas interesadas en ocuparlos, revisar esa información con criterios consistentes y comunicar el avance del proceso a cada participante. En la Universidad Capital de Estudios Superiores, estas actividades recaían principalmente en una persona del área de Recursos Humanos que, además, atendía otras responsabilidades institucionales. Esta situación motivó la solicitud de una aplicación que apoyara la organización de vacantes y la revisión inicial de candidatos.
+El propósito de este informe es presentar el análisis y diseño del sistema web de reclutamiento desarrollado para atender esa necesidad, mostrando la relación entre los problemas identificados y las decisiones de diseño tomadas. A lo largo del documento se explica qué funciones ofrece el sistema, quiénes participan en él, qué información conserva y cómo presenta los resultados a cada tipo de usuario.
+El capítulo I presenta el contexto institucional, los antecedentes, el problema, los objetivos, la justificación, la hipótesis y los alcances del proyecto. El capítulo II desarrolla el marco teórico: reclutamiento y selección de personal, sistemas de información, aplicaciones web, metodologías para el análisis y diseño, análisis y diseño de software, experiencia de usuario, bases de datos y control de acceso. El capítulo III contiene el análisis y diseño del sistema: la metodología aplicada, el estudio de factibilidad, la especificación de requisitos en los formatos IEEE 1362 e IEEE 830, los casos de uso, los modelos de procesos, la arquitectura, el diseño de interfaces y salidas, y el diseño de datos. El capítulo IV expone los resultados del análisis y diseño y el procedimiento de verificación de la hipótesis. La programación, las pruebas y la implementación del sistema se documentan en el reporte de desarrollo elaborado por otro integrante del proyecto. Finalmente, se
+11
+
+presentan las conclusiones generales, el trabajo futuro, las competencias desarrolladas, las fuentes de información, un glosario y los anexos.
+12
+
+Capítulo I. Generalidades del proyecto
+
+1.1 Descripción de la institución La Universidad Capital de Estudios Superiores (UCES) es una institución de educación
+superior ubicada en Zamora, Michoacán, México. Su oferta académica comprende programas de licenciatura e ingeniería en distintas áreas del conocimiento, y su operación requiere personal docente, administrativo, técnico y de apoyo. El área de Recursos Humanos es responsable de atraer, evaluar e incorporar a ese personal conforme a las necesidades de cada departamento.
+La oferta académica de la universidad se organiza en seis áreas, como se muestra en la tabla siguiente. Esta organización permite dimensionar la variedad de perfiles que la institución necesita contratar.
+
+Tabla 1 Áreas académicas y programas informados
+
+Área
+
+Programas
+
+Ciencias de la salud
+
+Odontología, Enfermería, Psicología, Nutrición y Fisioterapia.
+
+Creatividad
+
+Mercadotecnia Digital, Diseño Gráfico y Multimedia, Producción y Diseño de Modas, Comunicación y Medios Digitales.
+
+Gastronomía y turismo
+
+Gastronomía y Administración de Empresas Turísticas.
+
+Ciencias sociales Derecho, Pedagogía, Criminología y Recursos Humanos.
+
+Negocios
+
+Contaduría, Administración de Empresas, Agronegocios, Comercio Internacional y Aduanas.
+
+Ingenierías
+
+Ingeniero Arquitecto e Ingeniero Industrial.
+
+Nota. Información proporcionada por el área de Recursos Humanos.
+
+Además de las áreas académicas, la universidad cuenta con departamentos de apoyo como
+
+Biblioteca, Campos Clínicos, Deportes, Investigación, Laboratorio, Tecnología y Vinculación. En
+
+el sistema desarrollado, estos departamentos se representan como módulos: agrupaciones
+
+13
+
+configurables por Recursos Humanos que reúnen las vacantes de un mismo departamento o perfil de contratación.
+1.2 Antecedentes del proyecto Antes del sistema, la universidad anunciaba sus vacantes en Facebook y otras redes
+sociales. Las personas interesadas llamaban al número de contacto o acudían a las instalaciones para solicitar información. El proceso continuaba con la entrega del currículum y una entrevista breve, a partir de los cuales se valoraba la candidatura.
+La revisión se concentraba en la responsable de Recursos Humanos, quien atendía además otras actividades de la institución y, en ocasiones, solicitaba la opinión de otra persona. Los datos de cada candidatura se conservaban en archivos y mensajes, por lo que conocer el estado de un aspirante requería consultar información distribuida en distintos medios.
+El proyecto surgió cuando la responsable del área le solicitó al autor el desarrollo de una aplicación de reclutamiento. En una reunión inicial describió sus actividades y las funciones que necesitaba; después se realizaron reuniones breves para revisar avances y recibir observaciones sobre el funcionamiento y la presentación visual. En esas reuniones se solicitó incorporar valoración manual en algunas evaluaciones, respetar los colores institucionales y utilizar cuestionarios que el área ya aplicaba.
+1.3 Problemas por resolver El problema principal era la carga de trabajo asociada a la revisión inicial de candidatos y
+a la organización del seguimiento. Una misma persona debía difundir las oportunidades, atender consultas, revisar documentos y realizar entrevistas, además de cumplir con otras responsabilidades. El contacto por distintos medios impedía reunir en una sola consulta el estado de cada candidatura.
+14
+
+La evaluación inicial se basaba casi exclusivamente en el currículum y la entrevista, lo que obligaba a dedicar tiempo presencial a conocer aspectos básicos del perfil antes de contar con respuestas o evidencias organizadas por vacante. La tabla siguiente resume las situaciones identificadas y la necesidad que cada una genera.
+
+Tabla 2 Necesidades identificadas en el proceso previo
+
+Situación Difusión y contacto por redes, llamadas y visitas Información en archivos y mensajes
+Revisión inicial concentrada en Recursos Humanos Seguimiento dependiente del contacto individual Cambios en las necesidades de contratación
+
+Necesidad de información o función Reunir las oportunidades en un catálogo consultable.
+Relacionar persona, vacante, evaluación y resultado de revisión. Recabar respuestas y evidencias antes de la valoración administrativa. Permitir la consulta de estados y observaciones desde el perfil. Disponer de configuración de módulos, vacantes y evaluaciones.
+
+A partir de lo anterior, la pregunta que orienta el trabajo es: ¿cómo diseñar un sistema web que represente las necesidades de reclutamiento de la UCES mediante requisitos, procesos, interfaces y datos, y que apoye la revisión inicial de candidatos por parte de Recursos Humanos?
+
+1.4 Objetivos
+1.4.1 Objetivo general Analizar y diseñar un sistema web de reclutamiento de personal para la Universidad Capital
+de Estudios Superiores que centralice la publicación de vacantes, la evaluación de candidatos y la revisión administrativa, mediante la especificación de requisitos y el modelado de procesos, arquitectura, interfaces y datos.
+
+15
+
+1.4.2 Objetivos específicos 1. Describir el proceso de reclutamiento previo, sus actores y las necesidades del área de Recursos Humanos (OE-01). 2. Delimitar las funciones del sistema y especificar sus requisitos funcionales, no funcionales y reglas de negocio con base en los formatos IEEE 1362 e IEEE 830 (OE-02). 3. Modelar las interacciones de postulantes y administradores mediante casos de uso, diagramas de actividad, de estados y de secuencia (OE-03). 4. Diseñar la arquitectura del sistema y la distribución de responsabilidades entre interfaz, servicios de aplicación, autenticación, datos y almacenamiento (OE-04). 5. Diseñar el modelo entidad-relación, el modelo relacional y el diccionario de datos del sistema (OE-05). 6. Diseñar las interfaces y salidas del sistema y establecer la trazabilidad entre necesidades, requisitos y componentes de diseño (OE-06).
+1.5 Justificación El proyecto responde a una necesidad concreta de Recursos Humanos: disponer de
+información organizada para revisar a las personas interesadas en una vacante. El sistema relaciona cada candidatura con sus evaluaciones, respuestas, archivos y observaciones, de modo que el estado de un aspirante puede consultarse en un solo lugar y no en mensajes o archivos dispersos.
+Para la institución, el sistema reduce la dependencia del contacto individual: las vacantes se publican en un catálogo consultable, los aspirantes responden evaluaciones antes de la entrevista y Recursos Humanos llega a esa etapa con información previa. La documentación de análisis y diseño, a su vez, ofrece una referencia técnica que permite mantener y ampliar el sistema sin depender únicamente del conocimiento de su autor.
+Para el postulante, el sistema ofrece un recorrido claro: consultar oportunidades, participar en evaluaciones y conocer el resultado de la revisión desde su perfil, sin necesidad de acudir a la institución o llamar para conocer su situación.
+16
+
+Desde la Ingeniería en Sistemas Computacionales, el proyecto permite aplicar de forma integrada el análisis de necesidades, la ingeniería de requisitos, el modelado UML, el diseño de bases de datos relacionales y el diseño de interfaces a un problema real de una organización.
+1.6 Hipótesis H1: El sistema web de reclutamiento, diseñado a partir del análisis de las necesidades del
+área de Recursos Humanos de la UCES, permite centralizar en una sola plataforma la información de vacantes, evaluaciones, evidencias y decisiones de cada candidatura, y reduce el tiempo que Recursos Humanos dedica a la revisión inicial de candidatos en comparación con el proceso previo.
+H0: El sistema web de reclutamiento no centraliza la información de las candidaturas ni reduce el tiempo de revisión inicial respecto del proceso previo.
+Las variables consideradas son las siguientes: · Variable independiente: el sistema web de reclutamiento. · Variables dependientes: (a) grado de centralización de la información de cada
+candidatura, medido como la proporción de datos de la candidatura (vacante, evaluación, respuestas, evidencias y decisión) que pueden consultarse desde el sistema; (b) tiempo promedio de revisión inicial por candidato; y (c) nivel de satisfacción de Recursos Humanos con el sistema. El procedimiento para contrastar la hipótesis se describe en el capítulo IV.
+1.7 Alcances y delimitaciones Alcances. El sistema comprende:
+· Registro de cuentas con correo, contraseña y CURP, con control de CURP duplicada mediante una huella HMAC.
+· Inicio y cierre de sesión e identificación de roles (postulante y administrador). · Cuestionario base previo a la primera postulación.
+17
+
+· Consulta de módulos y vacantes. · Postulación a vacantes abiertas y presentación de evaluaciones con tiempo límite. · Carga de evidencias en formato de imagen o PDF. · Envío de evaluaciones y seguimiento desde el perfil del postulante. · Administración de módulos, vacantes, evaluaciones y preguntas. · Revisión de intentos y registro de decisiones y observaciones.
+Delimitaciones. Quedan fuera del alcance de esta versión la programación de entrevistas, la carga de currículums, la recuperación de contraseña por correo, la aprobación automática por promedio y el control de una sola postulación activa por usuario; estas funciones se proponen como trabajo futuro. El sistema apoya la revisión inicial; la contratación final corresponde al proceso institucional de Recursos Humanos. Tampoco forma parte de este trabajo la validación psicométrica de los cuestionarios utilizados.
+1.8 Conclusiones del capítulo El contexto del proyecto permitió identificar la necesidad de apoyar a Recursos Humanos
+en la organización de las vacantes y en la revisión de la información de los candidatos. Las reuniones con la responsable del área aportaron los antecedentes del proceso y las funciones esperadas.
+Con base en ello se definieron los objetivos, la hipótesis y el alcance del sistema: registro y acceso, cuestionario base, consulta de módulos y vacantes, evaluaciones con evidencias y revisión administrativa. La delimitación deja explícitas las funciones que se proponen para versiones posteriores.
+18
+
+Capítulo II. Marco teórico
+2.1 Reclutamiento y selección de personal 2.1.1 Definición
+El reclutamiento es el conjunto de actividades mediante las cuales una organización identifica una necesidad de personal, define el puesto y atrae a candidatos potencialmente calificados para ocuparlo (Chiavenato, 2011). Funciona como un sistema de información: la organización comunica sus oportunidades de empleo al mercado de trabajo con el propósito de reunir un número suficiente de candidatos pertinentes. La claridad de la convocatoria y de los requisitos facilita que los interesados comprendan la oportunidad y que la organización reciba candidaturas adecuadas (CIPD, 2026a).
+La selección, por su parte, consiste en elegir entre los candidatos reclutados a aquellos que mejor se ajustan a los requerimientos del puesto. Para ello utiliza información obtenida mediante distintos instrumentos, que deben aplicarse con criterios consistentes con el trabajo que se pretende cubrir (CIPD, 2026b; Dessler, 2015).
+2.1.2 Etapas del proceso De acuerdo con Chiavenato (2011) y Dessler (2015), el proceso de reclutamiento y
+selección suele comprender las siguientes etapas: 1. Identificación de la necesidad: un departamento solicita cubrir una vacante. 2. Definición del puesto: se describen funciones, requisitos, horario y ubicación. 3. Difusión de la convocatoria: la vacante se publica en los medios elegidos. 4. Recepción de candidaturas: se reciben los datos y documentos de los interesados. 5. Evaluación de candidatos: se aplican cuestionarios, pruebas de conocimientos, pruebas prácticas o psicométricas y entrevistas.
+19
+
+6. Decisión: se elige a la persona que se incorporará al puesto y se informa el resultado a los participantes. El sistema desarrollado en este proyecto apoya las etapas 2 a 5 y el registro de la decisión
+de la etapa 6; la contratación formal permanece en el proceso institucional.
+2.1.3 Tipos de reclutamiento El reclutamiento puede ser interno, cuando la vacante se cubre con personal de la propia
+organización mediante promociones o transferencias, o externo, cuando se buscan candidatos fuera de ella (Chiavenato, 2011). El reclutamiento externo puede realizarse por medios tradicionales (anuncios impresos, carteles, recomendaciones, ferias de empleo) o por medios electrónicos, conocidos como reclutamiento en línea o e-recruitment, que utilizan sitios web, bolsas de trabajo y redes sociales.
+2.1.4 Ventajas y desventajas del reclutamiento en línea
+
+Tabla 3 Ventajas y desventajas del reclutamiento en línea
+
+Ventajas
+Amplía el alcance de la convocatoria sin costos de impresión.
+
+Desventajas
+Puede generar un volumen alto de candidaturas poco pertinentes.
+
+Concentra la información de los candidatos en Requiere que los candidatos tengan acceso a internet y
+
+un solo lugar.
+
+habilidades digitales.
+
+Permite aplicar evaluaciones previas a la entrevista.
+Facilita el seguimiento del estado de cada candidatura.
+Reduce el contacto telefónico y presencial para consultas básicas.
+
+Implica responsabilidades sobre el tratamiento de datos personales.
+Requiere mantenimiento técnico y actualización de contenidos.
+Las evaluaciones en línea no sustituyen por completo la entrevista.
+
+Nota. Elaboración propia con base en Chiavenato (2011), Dessler (2015) y Mohdzaini (2023).
+
+20
+
+2.1.5 Ejemplos de plataformas de reclutamiento En México se utilizan bolsas de trabajo en línea como OCC Mundial, Computrabajo e
+Indeed, así como redes profesionales como LinkedIn. En organizaciones medianas y grandes también se emplean sistemas de seguimiento de candidatos (Applicant Tracking Systems, ATS), que organizan vacantes, candidaturas, evaluaciones y etapas del proceso. Estas herramientas sirven de referencia para el sistema desarrollado; sin embargo, se trata de servicios generales o de licencia comercial que no incorporan el cuestionario base, los módulos por departamento ni las evaluaciones con evidencias que requiere la UCES. 2.1.6 Apoyo tecnológico a Recursos Humanos
+El uso de tecnología y datos en Recursos Humanos puede apoyar la organización de actividades y el acceso a información para la toma de decisiones. Sus efectos dependen de las prácticas del área, de las capacidades de las personas y de la forma en que los recursos tecnológicos se incorporan al trabajo (Mohdzaini, 2023). Por ello, el diseño de un sistema de reclutamiento debe considerar tanto las funciones de la aplicación como la intervención de Recursos Humanos en cada decisión.
+2.2 Sistemas de información 2.2.1 Definición y componentes
+Un sistema de información es un conjunto de componentes interrelacionados que recolectan, procesan, almacenan y distribuyen información para apoyar la toma de decisiones y el control de una organización (Laudon y Laudon, 2016). Sus componentes son las personas, los procesos, los datos y la tecnología, y su comprensión exige identificar cómo se relacionan con las actividades de la organización (Raisinghani, 2025).
+21
+
+En el sistema de reclutamiento, las personas son los postulantes y el administrador de Recursos Humanos; los procesos incluyen registro, postulación, evaluación y revisión; los datos representan vacantes, evaluaciones, intentos, respuestas y decisiones; y la tecnología proporciona las interfaces y los servicios que permiten operar sobre ellos. 2.2.2 Datos e información para el seguimiento
+Los datos adquieren valor cuando se presentan con contexto. Una respuesta aislada debe relacionarse con la pregunta, la evaluación, el intento y la persona que la proporcionó; del mismo modo, un estado necesita indicar si pertenece a una vacante, a una postulación o a un intento (Raisinghani, 2025). Por esta razón, el diseño del sistema separa estas entidades y conserva sus relaciones de manera explícita.
+2.3 Aplicaciones web 2.3.1 Definición
+Una aplicación web es un programa que se ejecuta a través de un navegador y que se apoya en recursos y servicios disponibles en un servidor accesible mediante una red. A diferencia de una página web estática, una aplicación web permite al usuario interactuar con datos, capturar información y obtener respuestas personalizadas (MDN contributors, 2026b). 2.3.2 Funcionamiento
+Las aplicaciones web siguen el modelo cliente-servidor. El cliente (navegador) envía solicitudes HTTP o HTTPS; el servidor las procesa, consulta o actualiza la información persistente y devuelve una respuesta que el navegador interpreta para presentar la interfaz mediante HTML, CSS y JavaScript (MDN contributors, 2026a). La persistencia en una base de datos permite recuperar la información entre visitas y relacionarla con las cuentas y actividades de cada usuario.
+22
+
+2.3.3 Evolución histórica La web nació a principios de la década de 1990 como un sistema de documentos estáticos
+enlazados. Posteriormente surgieron las páginas dinámicas generadas en el servidor mediante lenguajes como PHP, ASP o Java. A mediados de la década de 2000, la técnica AJAX permitió actualizar partes de una página sin recargarla, lo que dio lugar a aplicaciones más interactivas. En la década de 2010 se popularizaron las aplicaciones de una sola página (Single Page Applications, SPA) construidas con bibliotecas como React, y más recientemente los marcos de trabajo híbridos, como Next.js, que combinan la generación de contenido en el servidor (Server-Side Rendering, SSR) con la interactividad del cliente. En paralelo, los servicios de Backend as a Service (BaaS) ofrecen autenticación, base de datos y almacenamiento listos para usarse, lo que reduce el esfuerzo de infraestructura en proyectos pequeños y medianos.
+2.4 Metodologías para el análisis y diseño de software Una metodología o modelo de proceso de software define el orden de las actividades de
+comunicación, planeación, modelado, construcción y despliegue, así como los productos que se generan en cada una (Pressman y Maxim, 2021). La elección del modelo depende del tamaño del proyecto, de la claridad inicial de los requisitos y de la disponibilidad del cliente para participar.
+2.4.1 Modelo en cascada El modelo en cascada, descrito por Royce (1970), organiza las actividades de forma
+secuencial: requisitos, análisis, diseño, codificación, pruebas y operación. Cada fase produce documentos que sirven de entrada a la siguiente (Sommerville, 2011).
+· Ventajas: es fácil de planear y de controlar; produce documentación completa en cada fase.
+· Desventajas: supone que los requisitos son estables desde el inicio; los errores de análisis se detectan tarde y el cliente no ve un producto funcional hasta el final.
+23
+
+2.4.2 Modelo en espiral Propuesto por Boehm (1988), el modelo en espiral combina la naturaleza iterativa del
+prototipado con los aspectos sistemáticos del modelo en cascada. Cada vuelta de la espiral incluye la definición de objetivos, el análisis de riesgos, el desarrollo y la planeación de la siguiente iteración.
+· Ventajas: incorpora explícitamente la gestión de riesgos y es adecuado para proyectos grandes y complejos.
+· Desventajas: requiere experiencia en el análisis de riesgos y puede resultar costoso para proyectos pequeños.
+2.4.3 Modelo de prototipos El modelo de prototipos se emplea cuando el cliente define objetivos generales pero no
+identifica con detalle los requisitos. Se construye rápidamente una versión que el cliente evalúa; sus observaciones se usan para refinar los requisitos y el diseño (Pressman y Maxim, 2021). Existen dos variantes: el prototipo desechable, que se descarta una vez aclarados los requisitos, y el prototipo evolutivo, que se refina en cada iteración hasta convertirse en el sistema final (Sommerville, 2011). Sus actividades son comunicación, plan rápido, modelado y diseño rápido, construcción del prototipo, y entrega y retroalimentación.
+· Ventajas: el cliente participa activamente y ve resultados tempranos; los malentendidos se detectan pronto; es adecuado cuando la interfaz de usuario es importante.
+· Desventajas: puede descuidarse la documentación si no se planea; el cliente puede confundir el prototipo con el producto terminado; requiere controlar el alcance en cada iteración.
+24
+
+2.4.4 Modelo incremental El modelo incremental entrega el software en partes funcionales. El primer incremento
+contiene las funciones básicas y los siguientes agregan capacidades adicionales (Pressman y Maxim, 2021).
+· Ventajas: entrega valor temprano y reduce el riesgo de un fracaso total. · Desventajas: requiere una arquitectura que permita integrar los incrementos; los requisitos
+generales deben conocerse desde el principio. 2.4.5 Comparación de metodologías
+
+Tabla 4 Comparación de modelos de proceso
+
+Criterio
+
+Cascada
+
+Espiral Prototipos
+
+Incremental
+
+Requisitos al inicio Completos y estables Parciales Generales
+
+Generales
+
+Participación del cliente
+
+Al inicio y al final
+
+En cada ciclo
+
+Continua
+
+En cada entrega
+
+Producto visible
+
+Al final
+
+Por ciclo Desde las primeras Por incremento semanas
+
+Tamaño de proyecto Cualquiera, con
+
+adecuado
+
+requisitos claros
+
+Grande Pequeño o mediano Mediano
+
+Énfasis
+
+Documentación
+
+Riesgo
+
+Validación con el Entregas
+
+usuario
+
+parciales
+
+Nota. Elaboración propia con base en Pressman y Maxim (2021) y Sommerville (2011).
+
+2.5 Análisis de software
+
+2.5.1 Definición El análisis de software es la actividad que busca comprender qué necesitan los usuarios y
+expresar las funciones y condiciones que debe cumplir un sistema. Su producto principal es una especificación que sirve de referencia para discutir el alcance y para relacionarlo con el diseño (Washizaki, 2026; Kendall y Kendall, 2011).
+
+25
+
+2.5.2 Requisitos de software Los requisitos funcionales describen los servicios que el sistema debe proporcionar y
+cómo debe reaccionar ante entradas específicas, por ejemplo, registrar una cuenta o guardar una decisión. Los requisitos no funcionales describen restricciones o cualidades del sistema, como la seguridad, la usabilidad o la mantenibilidad (Sommerville, 2011). Las reglas de negocio delimitan cuándo procede una acción y qué condiciones deben cumplirse; pueden implementarse en los servicios de la aplicación o mediante restricciones en la base de datos (Washizaki, 2026).
+Para documentar los requisitos existen formatos estandarizados. El estándar IEEE 1362 define la estructura de un documento de concepto de operaciones (Concept of Operations, ConOps), que describe el sistema actual, la justificación del cambio, el sistema propuesto, los escenarios operativos y sus impactos desde el punto de vista del usuario (IEEE, 1998b). El estándar IEEE 830 establece la estructura de una especificación de requisitos de software (ERS): introducción, descripción general y requisitos específicos (IEEE, 1998a). Ambos estándares fueron integrados posteriormente en la norma ISO/IEC/IEEE 29148, pero sus estructuras siguen siendo una referencia común en la formación de ingenieros.
+2.5.3 Pasos del análisis de software De acuerdo con Kendall y Kendall (2011) y Pressman y Maxim (2021), el análisis de
+software comprende los siguientes pasos: 1. Identificación del problema y de los interesados: quién usa el sistema y qué situación se quiere mejorar. 2. Levantamiento de información: obtención de datos sobre el proceso actual mediante técnicas como entrevistas u observación. 3. Análisis del proceso actual: identificación de actividades, actores, flujos de información y problemas.
+26
+
+4. Especificación de requisitos: redacción de requisitos funcionales, no funcionales y reglas de negocio.
+5. Modelado: representación de las interacciones, procesos y datos mediante diagramas. 6. Validación: revisión de la especificación con el cliente para confirmar que refleja sus
+necesidades.
+2.5.4 Técnicas de levantamiento de información
+
+Tabla 5 Técnicas de levantamiento de información
+
+Técnica
+
+Descripción
+
+Uso en el proyecto
+
+Entrevista
+
+Conversación estructurada o abierta Reunión inicial y reuniones de
+
+con los interesados.
+
+seguimiento con Recursos Humanos.
+
+Revisión de documentos
+
+Análisis de formatos, cuestionarios y Revisión de los cuestionarios que el área
+
+registros existentes.
+
+ya aplicaba.
+
+Observación
+
+Seguimiento directo de las actividades del proceso.
+
+Descripción del flujo de difusión, contacto y entrevista.
+
+Cuestionario
+
+Preguntas escritas para varios participantes.
+
+Propuesto para la validación con Recursos Humanos (Anexo B).
+
+Prototipado
+
+Versión funcional que el usuario evalúa.
+
+Revisión de avances del sistema en cada iteración.
+
+Nota. Elaboración propia con base en Kendall y Kendall (2011).
+
+2.5.5 Trazabilidad
+
+La trazabilidad vincula las necesidades, los requisitos y los productos de diseño. Permite
+
+identificar qué caso de uso, interfaz o entidad atiende cada requisito y reconocer vacíos o cambios
+
+de alcance (Washizaki, 2026). En este trabajo se organiza mediante identificadores de objetivos
+
+(OE), requisitos (RF, RNF), casos de uso (CU), interfaces (UI) y salidas (S).
+
+27
+
+2.6 Modelado con el Lenguaje Unificado de Modelado 2.6.1 Modelos y diagramas
+Los modelos representan aspectos de un sistema para facilitar su comprensión; cada diagrama selecciona elementos y relaciones relevantes con un propósito definido (IBM, s. f.-a). El Lenguaje Unificado de Modelado (UML) es una notación estándar para especificar, visualizar y documentar la estructura y el comportamiento de los sistemas de software (Object Management Group, 2017).
+2.6.2 Diagramas utilizados · Diagrama de casos de uso: muestra las funciones del sistema y los actores que interactúan con ellas. Las relaciones <<include>> y <<extend>> indican casos que forman parte obligatoria u opcional de otro (IBM, s. f.-b). · Diagrama de actividad: representa el flujo de acciones y decisiones de un proceso. · Diagrama de estados: describe las situaciones que puede adoptar una entidad y los eventos que provocan cada transición. · Diagrama de secuencia: muestra el intercambio de mensajes entre participantes en orden temporal. · Diagrama de componentes y de despliegue: representan la organización lógica del software y su distribución en nodos físicos o servicios.
+2.7 Diseño de software 2.7.1 Definición
+El diseño de software transforma los requisitos en una representación de la solución que puede construirse. Incluye decisiones sobre la arquitectura, los componentes, las interfaces y los datos (Pressman y Maxim, 2021; Washizaki, 2026).
+28
+
+2.7.2 Arquitectura de software La arquitectura de software es la estructura del sistema: sus elementos, las propiedades
+visibles de estos y las relaciones entre ellos (Bass et al., 2012). Algunos estilos arquitectónicos comunes son los siguientes:
+· Cliente-servidor: el cliente solicita servicios y el servidor los proporciona; separa la presentación del procesamiento y los datos.
+· Arquitectura en capas: organiza el sistema en capas de presentación, lógica de aplicación y acceso a datos, cada una con responsabilidades definidas.
+· Modelo-Vista-Controlador (MVC): separa la representación de los datos, la interfaz y el control de las interacciones.
+· Backend como servicio (BaaS): delega autenticación, base de datos y almacenamiento a una plataforma administrada, a la que la aplicación accede mediante interfaces de programación. El sistema de reclutamiento combina una arquitectura en capas con el modelo cliente-
+servidor y un BaaS (Supabase) para los servicios de datos.
+2.7.3 Diseño de interfaz El diseño de interfaz define cómo se comunica el usuario con el sistema: la organización
+de pantallas, la navegación, los formularios, los mensajes y los elementos visuales. Una buena interfaz permite al usuario comprender qué puede hacer y qué ocurrió después de cada acción (Nielsen, 1994).
+2.7.4 Diseño de datos El diseño de datos traduce los objetos de información identificados en el análisis a
+estructuras que el sistema puede almacenar y consultar. En sistemas con base de datos relacional comprende el modelo entidad-relación, el modelo relacional y el diccionario de datos (Elmasri y Navathe, 2007).
+29
+
+2.7.5 Diseño de salidas Las salidas transforman los registros en información que un usuario puede consultar. Su
+diseño define destinatario, propósito, contenido y medio de presentación; una salida puede ser una lista en pantalla, un resumen o una confirmación (Kendall y Kendall, 2011). 2.7.6 Importancia del diseño
+El diseño es el puente entre los requisitos y la construcción. Un diseño documentado permite revisar cómo se atiende cada necesidad antes de programar, facilita el mantenimiento y la incorporación de nuevas funciones, y reduce errores derivados de decisiones implícitas (Pressman y Maxim, 2021).
+2.8 Bases de datos relacionales 2.8.1 Modelo entidad-relación
+El modelo entidad-relación, propuesto por Chen (1976), representa la información mediante entidades (objetos de interés), atributos (propiedades de las entidades) y relaciones (asociaciones entre entidades), junto con su cardinalidad (uno a uno, uno a muchos o muchos a muchos). En la notación de Chen, las entidades se dibujan como rectángulos, las relaciones como rombos y los atributos como elipses. 2.8.2 Modelo relacional
+El modelo relacional, formulado por Codd (1970), organiza los datos en tablas (relaciones) formadas por filas (tuplas) y columnas (atributos). Las claves primarias identifican cada registro; las claves foráneas vinculan registros de distintas tablas; las restricciones de unicidad limitan repeticiones; y las restricciones de comprobación (CHECK) limitan los valores permitidos (PostgreSQL Global Development Group, s. f.).
+30
+
+2.8.3 Diccionario de datos El diccionario de datos documenta, para cada tabla, el nombre de los campos, su tipo, si
+admiten valores nulos, sus valores predeterminados, sus claves y su significado. Complementa los diagramas porque permite consultar detalles que una figura general no muestra (Elmasri y Navathe, 2007).
+2.9 Experiencia de usuario 2.9.1 Definición
+La experiencia de usuario (UX) comprende las percepciones y respuestas de una persona derivadas del uso de un producto, sistema o servicio (International Organization for Standardization [ISO], 2019). Incluye la facilidad de uso, la claridad de la información, la eficiencia para completar tareas y la satisfacción del usuario (Norman, 2013).
+2.9.2 Métodos de experiencia de usuario · Entrevistas con usuarios: permiten conocer necesidades, tareas y frustraciones. · Personas y escenarios: representan perfiles típicos de usuario y sus situaciones de uso. · Prototipos: versiones tempranas de las pantallas para validar flujos antes de construirlos. · Evaluación heurística: revisión de la interfaz con base en principios como los diez de Nielsen (1994): visibilidad del estado del sistema, correspondencia con el mundo real, control y libertad del usuario, consistencia, prevención de errores, reconocimiento antes que recuerdo, flexibilidad, diseño minimalista, ayuda para corregir errores y documentación. · Pruebas de usabilidad: observación de usuarios reales mientras completan tareas. · Cuestionarios de satisfacción: medición de la percepción del usuario después de utilizar el sistema.
+31
+
+2.9.3 Accesibilidad en formularios Los formularios accesibles requieren etiquetas e instrucciones comprensibles, agrupación
+lógica de campos y mensajes que ayuden a identificar y corregir errores (World Wide Web Consortium, 2026). 2.9.4 Importancia
+En un sistema de reclutamiento, la experiencia de usuario influye en que los candidatos completen su registro y sus evaluaciones, y en que Recursos Humanos pueda revisar la información con rapidez. Un recorrido confuso puede provocar abandonos o errores en la información capturada (Garrett, 2011).
+2.10 Seguridad y control de acceso 2.10.1 Autenticación y autorización
+La autenticación verifica la identidad de un usuario, mientras que la autorización determina si puede realizar una acción o acceder a un recurso. Haber iniciado sesión no implica disponer de todos los permisos; el control de acceso debe verificarse en el servidor sobre cada solicitud y cada recurso, y no solo ocultando botones en la interfaz (OWASP Foundation, s. f.). 2.10.2 Control de acceso basado en roles
+El control de acceso basado en roles asigna permisos a roles (por ejemplo, postulante y administrador) y no directamente a cada usuario. Esto simplifica la administración y reduce el riesgo de otorgar permisos indebidos (OWASP Foundation, s. f.). 2.10.3 Huellas mediante HMAC
+HMAC (Hash-based Message Authentication Code) combina una función hash criptográfica con una clave secreta (Krawczyk et al., 1997). Aplicado a un dato como la CURP,
+32
+
+produce una huella que permite comparar si dos valores son iguales sin almacenar el dato original en texto plano. Como la huella depende de una clave secreta, no puede recalcularse sin ella, lo que dificulta ataques por diccionario. 2.11 Conclusiones del capítulo
+El marco teórico relaciona el reclutamiento de personal con los conceptos de sistemas de información, aplicaciones web, metodologías de desarrollo, análisis y diseño de software, experiencia de usuario, bases de datos y seguridad. La revisión de las metodologías permitió identificar el modelo de prototipos evolutivo como el más adecuado para un proyecto con requisitos generales al inicio y con participación continua del cliente.
+Los estándares IEEE 1362 e IEEE 830, la notación UML y el modelo entidad-relación proporcionan los formatos con los que se documenta el capítulo III.
+33
+
+Capítulo III. Desarrollo 3.1 Metodología para realizar el análisis y diseño de software
+Para el análisis y diseño del sistema se adoptó el modelo de prototipos evolutivo (Pressman y Maxim, 2021; Sommerville, 2011). La elección se justifica por tres características del proyecto: al inicio, Recursos Humanos conocía los objetivos generales (publicar vacantes, evaluar candidatos y revisar resultados), pero no el detalle de cada función; la responsable del área estuvo disponible para revisar avances con frecuencia; y la presentación visual y la facilidad de uso eran aspectos importantes para el cliente, lo que hacía conveniente validar con ella los requisitos y las pantallas desde etapas tempranas.
+A diferencia del prototipo desechable, cada versión revisada se conservó y se refinó en la siguiente iteración, de modo que los requisitos, modelos y diseños que se documentan en este informe corresponden al último prototipo aceptado por Recursos Humanos. La programación y la implementación del sistema se documentan en el reporte de desarrollo del proyecto. La figura siguiente muestra el ciclo seguido.
+34
+
+Figura 1 Ciclo de prototipado evolutivo aplicado al proyecto
+Nota. Elaboración propia con base en Pressman y Maxim (2021). La tabla siguiente relaciona cada fase del modelo con las actividades realizadas y los
+productos obtenidos. 35
+
+Tabla 6 Fases del prototipado evolutivo y productos del proyecto
+
+Fase Comunicación
+Plan rápido
+Modelado y diseño rápido
+
+Actividades realizadas
+Reunión inicial con la responsable de Recursos Humanos para conocer el proceso actual, los problemas y las funciones esperadas. Revisión de los cuestionarios que el área aplicaba.
+Priorización de los recorridos: registro y acceso, consulta de vacantes, evaluación y revisión administrativa.
+Definición de requisitos, casos de uso, modelo de datos y pantallas de cada iteración.
+
+Construcción del prototipo
+
+Elaboración de la versión del prototipo que se presenta a Recursos Humanos (detallada en el reporte de desarrollo).
+
+Entrega y retroalimentación
+
+Reuniones breves para revisar avances. Se solicitaron valoración manual de evaluaciones, adecuación a los colores institucionales y el uso de los cuestionarios del área.
+
+Nota. Elaboración propia.
+
+Productos Descripción del proceso actual, actores y necesidades (sección 3.2.1). Alcance y delimitaciones (sección 1.7).
+ERS, casos de uso, modelos de datos e interfaces (secciones 3.2 a 3.4). Prototipo para revisión.
+Ajustes incorporados en la siguiente iteración.
+
+Las diferencias entre las necesidades planteadas inicialmente y el alcance final se resumen
+
+en el Anexo A.
+
+3.2 Análisis de software
+3.2.1 Requerimientos del cliente Recursos Humanos requiere organizar las oportunidades laborales y recibir información
+que le permita revisar candidaturas antes de la entrevista. Sus necesidades se agrupan en cuatro rubros: administración de vacantes, recopilación de respuestas y evidencias, valoración administrativa y consulta del avance de cada candidatura.
+En el proceso anterior al sistema, las vacantes se difundían en Facebook y otras redes sociales; los interesados se comunicaban por teléfono o acudían a la institución con su currículum;
+
+36
+
+la revisión se apoyaba en una entrevista breve y en el documento entregado; y la información se conservaba en archivos y mensajes.
+Con el sistema, el postulante crea una cuenta, completa el cuestionario base y consulta módulos y vacantes. Al postularse, el sistema verifica que haya completado el cuestionario base y que la vacante esté abierta, registra la postulación y crea un intento de evaluación. Las respuestas y evidencias quedan disponibles para que el administrador las revise y registre su decisión, que el postulante puede consultar desde su perfil. Los actores que participan son los siguientes:
+
+Tabla 7 Actores y responsabilidades
+
+Actor Postulante
+Administrador de Recursos Humanos
+
+Responsabilidades
+Crear su cuenta, acceder, completar el cuestionario base, consultar vacantes, responder evaluaciones, cargar evidencias y consultar el perfil.
+Configurar módulos, vacantes y evaluaciones; administrar preguntas; consultar intentos y evidencias; registrar revisión, decisión y observaciones.
+
+3.2.2 Estudio de factibilidad del proyecto
+Factibilidad técnica La factibilidad técnica evalúa si existen los recursos tecnológicos y los conocimientos necesarios para construir y operar el sistema. Las tecnologías seleccionadas (Next.js, React y TypeScript para la aplicación, y Supabase con PostgreSQL para los servicios de datos) son de uso extendido, cuentan con documentación oficial abundante y, en el caso de Next.js, React, TypeScript y PostgreSQL, son de código abierto. Supabase concentra en una sola plataforma la autenticación, la base de datos y el almacenamiento, lo que evita instalar y administrar servidores propios.
+
+37
+
+Tabla 8 Recursos técnicos para el desarrollo y la operación
+
+Recurso
+
+Desarrollo
+
+Operación
+
+Equipo de cómputo
+
+Computadora con procesador de cuatro núcleos o superior, 8 GB de memoria RAM como mínimo (16 GB recomendados), unidad de estado sólido y sistema operativo Windows, macOS o Linux, con Node.js, editor de código y navegador.
+
+Cualquier computadora o teléfono con navegador web actualizado.
+
+Software
+
+Node.js, Next.js, TypeScript, gestor de paquetes npm, control de versiones Git y repositorio en GitHub.
+
+Navegador web (Chrome, Edge, Firefox o Safari en versiones recientes).
+
+Servicios en la Proyecto de Supabase (Auth, PostgreSQL y Storage). nube
+
+Proyecto de Supabase y servicio de alojamiento para la aplicación Next.js.
+
+Conectividad Conexión a internet.
+
+Conexión a internet para postulantes y Recursos Humanos.
+
+Conocimientos Desarrollo web con React y TypeScript, bases de datos relacionales y análisis de sistemas.
+
+Uso básico de navegador; capacitación breve para el administrador.
+
+Nota. Elaboración propia.
+
+Dado que los componentes requeridos están disponibles como servicios en la nube y que
+
+se cuenta con los conocimientos necesarios para utilizarlos, el proyecto se considera técnicamente
+
+factible.
+
+Factibilidad económica La factibilidad económica compara los costos de desarrollo y operación con los beneficios esperados. El costo de desarrollo se estima como el producto de las horas dedicadas por una tarifa de referencia para un desarrollador de nivel inicial en México; el equipo de cómputo se considera mediante la depreciación proporcional al periodo del proyecto; y los costos de operación corresponden a los servicios en la nube contratados de forma recurrente. Los servicios cotizados
+
+38
+
+en dólares estadounidenses se convirtieron a pesos con un tipo de cambio de referencia de $18.50 MXN por dólar. Todos los montos se expresan en pesos mexicanos y no incluyen IVA.
+
+Tabla 9 Estimación de costos del proyecto
+
+Concepto
+
+Cantidad Costo unitario Periodicidad Total
+
+(MXN)
+
+(MXN)
+
+Análisis y diseño
+
+160 horas $180.00 por hora
+
+Única
+
+$28,800.00
+
+Programación
+
+240 horas $180.00 por hora
+
+Única
+
+$43,200.00
+
+Documentación
+
+60 horas $150.00 por hora
+
+Única
+
+$9,000.00
+
+Equipo de cómputo (depreciación proporcional)
+
+6 meses $450.00 por mes Única
+
+$2,700.00
+
+Internet y energía eléctrica (proporcional) 6 meses $250.00 por mes Única
+
+$1,500.00
+
+Servicio de Supabase, plan Pro (USD 25) 12 meses $462.50 por mes Mensual
+
+$5,550.00
+
+Alojamiento de la aplicación web, plan 12 meses $370.00 por mes Mensual Pro de Vercel (USD 20)
+
+$4,440.00
+
+Dominio web .com.mx
+
+1 año
+
+$550.00 por año Anual
+
+$550.00
+
+Inversión inicial (costos únicos)
+
+$85,200.00
+
+Costo de operación anual
+
+$10,540.00
+
+Nota. Elaboración propia. Tarifas por hora estimadas para un desarrollador de nivel inicial en México. Depreciación del equipo calculada sobre una computadora portátil de $18,000.00 con la tasa anual de 30 % que la Ley del Impuesto sobre la Renta establece para equipo de cómputo, proporcional a seis meses. Precios de los servicios en la nube de referencia; deben confirmarse en las páginas oficiales de cada proveedor al momento de contratarlos. Montos sin IVA.
+
+La inversión inicial estimada asciende a $85,200.00, de los cuales $81,000.00
+
+corresponden al trabajo de análisis, diseño, programación y documentación. Este trabajo fue
+
+realizado por los residentes como parte de su proyecto de titulación, por lo que no representó una
+
+erogación para la institución; su valor se presenta como referencia de lo que costaría contratar el
+
+desarrollo de forma externa.
+
+39
+
+El costo de operación anual estimado es de $10,540.00, equivalente a cerca de $880.00 mensuales, y cubre la base de datos, la autenticación, el almacenamiento de archivos, el alojamiento de la aplicación y el dominio. En una etapa inicial con pocos usuarios, este costo puede reducirse utilizando los planes gratuitos de los proveedores, con la limitación de que el plan gratuito de Supabase pausa los proyectos inactivos y el plan gratuito de Vercel está destinado a uso no comercial; por ello, para la operación institucional se recomiendan los planes de pago considerados en la tabla.
+Entre los beneficios esperados se encuentran la reducción del tiempo que Recursos Humanos dedica a atender consultas telefónicas y presenciales, la disponibilidad de información previa a la entrevista y la eliminación del manejo de candidaturas en archivos y mensajes dispersos. Además, el sistema evita el pago de licencias de plataformas comerciales de seguimiento de candidatos, que suelen cobrarse por suscripción mensual y por usuario. Dado que la institución no realizó una erogación por el desarrollo y que el costo de operación es bajo en relación con los beneficios esperados, el proyecto se considera económicamente factible.
+Factibilidad operativa La factibilidad operativa evalúa si el sistema será utilizado y aceptado por las personas que participan en el proceso. La responsable de Recursos Humanos solicitó el sistema, participó en las reuniones iniciales y de seguimiento, y sus observaciones se incorporaron en las iteraciones del prototipo, lo que indica disposición para su uso. Para los postulantes, el sistema solo requiere un navegador y una cuenta de correo, y los recorridos se diseñaron con pasos guiados y mensajes claros. Para el administrador se requiere una capacitación breve sobre la gestión de módulos, vacantes, evaluaciones y la revisión de intentos.
+40
+
+Con base en lo anterior, el sistema se considera operativamente factible, sujeto a la capacitación del personal y a la definición del responsable de mantener actualizado el catálogo de vacantes.
+3.2.3 Requerimientos del sistema formato IEEE 1362 A continuación se presenta el documento de concepto de operaciones del sistema,
+organizado conforme a las secciones del estándar IEEE 1362 (IEEE, 1998b).
+1. Alcance Identificación. Sistema web de reclutamiento de personal de la Universidad Capital de Estudios Superiores, versión documentada en este informe. Visión general. El sistema permite publicar vacantes organizadas por módulos, recibir postulaciones, aplicar un cuestionario base y evaluaciones con tiempo límite y evidencias, y registrar la revisión administrativa de cada intento. Los usuarios son los postulantes y el personal de Recursos Humanos.
+2. Documentos referenciados IEEE Std 830-1998, IEEE Std 1362-1998, la especificación de requisitos de la sección 3.2.4 y la documentación técnica de Next.js y Supabase.
+3. Sistema actual Antecedentes, objetivos y alcance. El reclutamiento se realizaba de forma manual con apoyo de redes sociales, teléfono y entrevistas presenciales. Modo de operación. Recursos Humanos publicaba la vacante en redes sociales; los interesados llamaban o acudían a la institución; se recibía el currículum y se realizaba una entrevista breve; la decisión se comunicaba de manera individual. Usuarios. La responsable de Recursos Humanos, que concentraba todas las actividades, y los candidatos externos.
+41
+
+Entorno de soporte. Redes sociales, teléfono, correo electrónico, archivos y mensajes. Problemas. Carga de trabajo concentrada en una persona, información dispersa, ausencia de evaluaciones previas a la entrevista y seguimiento dependiente del contacto individual (tabla de necesidades del capítulo I).
+4. Justificación y naturaleza de los cambios Justificación. Centralizar la información de las candidaturas y obtener respuestas y evidencias antes de la entrevista para reducir la carga de la revisión inicial. Cambios requeridos. · Catálogo de vacantes consultable en línea, agrupado por módulos. · Cuentas de usuario con un cuestionario base común. · Evaluaciones por vacante con tiempo límite y carga de evidencias. · Panel administrativo para configurar el catálogo y revisar intentos. · Consulta del estado de la candidatura desde el perfil del postulante. Prioridades. En primer lugar, el registro, el acceso y la consulta de vacantes; después, las evaluaciones y las evidencias; finalmente, la revisión administrativa y el seguimiento. Cambios no incluidos. Programación de entrevistas, carga de currículums y recuperación de contraseña por correo.
+5. Concepto del sistema propuesto Objetivos. Los indicados en la sección 1.4. Políticas y restricciones. Solo el rol administrador puede configurar el catálogo y registrar decisiones. Una CURP solo puede asociarse a una cuenta. Para postularse es requisito completar el cuestionario base. Descripción. Aplicación web con dos áreas: participación (postulante) y administración (Recursos Humanos), apoyada en Supabase para la autenticación, los datos y los archivos.
+42
+
+Usuarios. Postulante y administrador de Recursos Humanos (sección 3.2.1). Entorno de soporte. Navegador web, conexión a internet, servicio de alojamiento de la aplicación y proyecto de Supabase. 6. Escenarios operativos
+
+Tabla 10 Escenarios operativos del sistema
+
+Escenario
+
+Descripción
+
+E-1. Publicación de una vacante
+
+El administrador crea un módulo (si no existe), registra la vacante con título, horario, ubicación, descripción y requisitos, y la deja en estado abierto. El sistema crea automáticamente una evaluación asociada de 30 minutos, a la que el administrador agrega preguntas.
+
+E-2. Primera postulación
+
+Una persona se registra con correo, contraseña y CURP; inicia sesión; responde el cuestionario base; consulta los módulos; abre una vacante; elige «Postularme ahora»; responde la evaluación, carga su evidencia y envía.
+
+E-3. Revisión de El administrador abre la lista de intentos, selecciona uno, consulta las respuestas, la
+
+candidatos
+
+evidencia y los indicadores del cuestionario base, y registra su decisión (aprobado o
+
+rechazado) con observaciones.
+
+E-4. Seguimiento El postulante abre su perfil y consulta la vacante, la fecha, el estado de su intento, la decisión y las notas registradas.
+
+E-5. Excepciones Credenciales inválidas, CURP ya registrada, cuestionario base pendiente, vacante cerrada, evaluación vencida o error al cargar un archivo: el sistema informa el problema y no continúa con la operación.
+
+Nota. Elaboración propia.
+
+7. Resumen de impactos
+
+Impactos operativos. Las vacantes se publican en el sistema y pueden difundirse en redes
+
+sociales mediante un enlace; la revisión inicial se realiza con la información capturada en línea.
+
+Impactos organizacionales. Se requiere que una persona de Recursos Humanos tenga el
+
+rol de administrador y que se defina quién mantiene actualizados los módulos, las vacantes y las
+
+evaluaciones.
+
+Impactos durante el desarrollo. Participación de la responsable de Recursos Humanos
+
+en las reuniones de revisión del prototipo.
+
+43
+
+8. Análisis del sistema propuesto Mejoras. Información centralizada por candidatura, evaluaciones previas a la entrevista, seguimiento en línea y catálogo configurable. Limitaciones. Requiere conexión a internet; la entrevista y la contratación siguen fuera del sistema; los indicadores del cuestionario base son de apoyo y no constituyen un diagnóstico psicométrico. Alternativas consideradas. Continuar con el proceso manual, usar bolsas de trabajo comerciales o adquirir un ATS. Se eligió un desarrollo propio porque permite incorporar el cuestionario base, los módulos por departamento y las evaluaciones con evidencias que solicitó la institución.
+3.2.4 Especificación de requisitos de software formato IEEE 830 La siguiente especificación sigue la estructura del estándar IEEE 830 (IEEE, 1998a).
+1. Introducción 1.1 Propósito. Definir los requisitos del sistema web de reclutamiento para servir de referencia a Recursos Humanos, al desarrollador y a quien mantenga el sistema. 1.2 Ámbito del sistema. El sistema se denomina Plataforma de reclutamiento UCES. Permite registrar postulantes, publicar vacantes, aplicar evaluaciones y registrar la revisión administrativa. No incluye la gestión de entrevistas ni la contratación. 1.3 Definiciones, acrónimos y abreviaturas. Se presentan en el Glosario. 1.4 Referencias. IEEE Std 830-1998, IEEE Std 1362-1998 y la documentación de Next.js y Supabase. 1.5 Visión general. La sección 2 describe el producto en términos generales y la sección 3 detalla los requisitos específicos.
+44
+
+2. Descripción general 2.1 Perspectiva del producto. Sistema independiente, accesible por navegador, que utiliza los servicios de Supabase para la autenticación, la base de datos y el almacenamiento. 2.2 Funciones del producto. Gestión de cuentas y acceso; cuestionario base; consulta de módulos y vacantes; postulación y evaluación; carga de evidencias; seguimiento; administración del catálogo; revisión y decisión. 2.3 Características de los usuarios.
+
+Tabla 11 Características de los usuarios
+
+Usuario
+
+Perfil
+
+Conocimientos requeridos
+
+Postulante
+
+Persona externa interesada en una Uso básico de navegador y correo vacante docente, administrativa o de electrónico. apoyo.
+
+Administrador Personal de Recursos Humanos
+
+de RH
+
+responsable del reclutamiento.
+
+Uso de computadora y conocimiento del proceso de reclutamiento; capacitación breve en el sistema.
+
+Nota. Elaboración propia.
+
+2.4 Restricciones. Aplicación web desarrollada con Next.js, React y TypeScript; datos en
+
+PostgreSQL mediante Supabase; archivos de evidencia limitados a imágenes y PDF; interfaz en
+
+español con los colores institucionales.
+
+2.5 Suposiciones y dependencias. Los usuarios cuentan con conexión a internet y un
+
+navegador actualizado. El sistema depende de la disponibilidad de Supabase y del servicio de
+
+alojamiento.
+
+2.6 Requisitos futuros. Programación de entrevistas, carga de currículums, recuperación
+
+de contraseña, exportación de reportes y control de una sola postulación activa (ver Trabajo
+
+futuro).
+
+45
+
+3. Requisitos específicos
+3.1 Interfaces externas.
+· Interfaces de usuario: quince pantallas descritas en la sección 3.3.2. · Interfaces de hardware: no se requieren dispositivos especiales; basta una computadora o
+teléfono con navegador. · Interfaces de software: Supabase Auth para cuentas y sesiones, la API de datos de
+Supabase sobre PostgreSQL y Supabase Storage para los archivos. · Interfaces de comunicación: protocolo HTTPS entre el navegador, la aplicación y los
+servicios de Supabase. 3.2 Requisitos funcionales.
+
+Tabla 12 Catálogo de requisitos funcionales
+
+ID Función
+
+Descripción
+
+RF- Registrar cuenta 01
+
+Solicitar correo, contraseña y CURP; validar datos y registrar cuenta, perfil y rol de postulante.
+
+RF- Controlar duplicación de Normalizar la CURP, comparar su huella HMAC y rechazar la
+
+02 CURP
+
+huella ya registrada.
+
+RF- Gestionar acceso 03
+
+Autenticar credenciales, consultar rol, presentar opciones y permitir cierre de sesión.
+
+RF- Consultar módulos 04
+
+Mostrar agrupaciones disponibles y permitir acceder a sus vacantes.
+
+RF- Consultar vacantes 05
+
+Presentar listado y detalle con título, descripción, requisitos, horario, ubicación y estado.
+
+RF- Completar cuestionario Iniciar o recuperar el intento del instrumento base y registrar su
+
+06 base
+
+envío.
+
+RF- Iniciar postulación 07
+
+Comprobar sesión, cuestionario base completo y vacante abierta; registrar o recuperar postulación e intento.
+
+RF- Responder evaluación 08
+
+Presentar preguntas y guardar o actualizar la opción seleccionada por pregunta e intento.
+
+RF- Controlar tiempo 09
+
+Conservar inicio y fecha límite, mostrar tiempo restante y limitar guardado al periodo válido.
+
+RF- Cargar evidencias 10
+
+Permitir archivos desde el selector de imágenes y PDF y registrar referencias ligadas al intento.
+
+RF- Enviar intento 11
+
+Registrar envío, generar los indicadores previstos y colocar el intento en revisión.
+
+46
+
+ID Función
+
+Descripción
+
+RF- Consultar seguimiento Presentar intentos, estados, decisiones y observaciones disponibles
+
+12
+
+desde el perfil.
+
+RF- Administrar módulos 13
+
+Crear y editar nombre y descripción de las agrupaciones desde el apartado administrativo.
+
+RF- Administrar vacantes 14
+
+Crear y editar convocatorias, asignar módulo y estado; generar evaluación asociada y controlar eliminación.
+
+RF- Configurar evaluaciones Consultar y modificar título y duración; gestionar eliminación con la
+
+15
+
+restricción de intentos asociados.
+
+RF- Administrar preguntas Crear, editar y eliminar preguntas, opciones y respuesta de
+
+16
+
+referencia cuando se indique.
+
+RF- Consultar revisión 17 administrativa
+
+Listar intentos y mostrar datos del candidato, vacante, respuestas, evidencias e indicadores.
+
+RF- Registrar valoración 18
+
+Guardar decisión y notas, aprobar, rechazar o marcar en revisión según las acciones administrativas.
+
+3.3 Requisitos de rendimiento. Como objetivo de diseño, las operaciones de consulta y guardado deben responder en un tiempo que permita la interacción continua del usuario en condiciones normales de red, y el guardado de cada respuesta debe hacerse de forma individual para no perder información si la sesión se interrumpe. Los valores de tiempo de respuesta y de usuarios concurrentes deben establecerse mediante pruebas de carga en el entorno de producción.
+3.4 Restricciones de diseño. Separación entre la interfaz, los servicios de aplicación y los servicios de datos; validación de los datos de entrada en el servidor; uso de identificadores UUID en todas las tablas.
+3.5 Atributos del sistema (requisitos no funcionales).
+
+Tabla 13 Requisitos no funcionales
+
+ID
+RNF01
+RNF02
+
+Criterio Claridad de interacción
+Control de acceso
+
+Descripción
+Organizar formularios y mensajes para reconocer datos requeridos, errores y resultados.
+Relacionar operaciones con sesión, rol y pertenencia de los recursos según corresponda.
+
+47
+
+ID
+RNF03
+RNF04
+RNF05
+RNF06
+RNF07
+
+Criterio
+
+Descripción
+
+Integridad de información Mantener claves, relaciones y restricciones declaradas al describir los registros.
+
+Persistencia y seguimiento Conservar respuestas y referencias de evidencias asociadas a los intentos.
+
+Acceso mediante navegador Presentar los recorridos a través de una interfaz web; su uso remoto requiere conectividad.
+
+Mantenibilidad documental Separar responsabilidades y mantener una referencia de entidades, interfaces y requisitos.
+
+Tratamiento de datos e identificadores
+
+Evitar exponer la CURP en el flujo ordinario y considerar permisos para información y archivos.
+
+3.6 Reglas de negocio.
+
+Tabla 14 Reglas de negocio
+ID Descripción
+RN- El registro solicita correo, contraseña y CURP; comprueba el formato de la CURP y la 01 existencia de su huella antes de completar la cuenta.
+RN- La cuenta de registro se asigna al rol user; el flujo de registro no requiere confirmación del 02 correo.
+RN- Para solicitar una postulación se requiere una sesión válida y haber completado el cuestionario 03 base. Completarlo no implica aprobación administrativa.
+RN- La solicitud de postulación verifica que la vacante exista y tenga estado open, y obtiene una 04 evaluación asociada.
+RN- Si existe una postulación del usuario a la vacante, el flujo utiliza su identificador. Si existe un 05 intento no enviado, se recupera; en caso contrario, se crea uno nuevo.
+RN- El servidor rechaza el guardado de respuestas después del vencimiento o cuando el intento ya 06 fue enviado.
+RN- Al vencer el tiempo, la interfaz envía la evaluación automáticamente mientras la página 07 permanece abierta.
+RN- El selector de evidencia contempla imágenes y PDF. La carga registra el archivo en Storage y 08 su referencia en evidence_uploads.
+RN- El envío coloca el intento en UNDER_REVIEW; la aprobación o el rechazo se registran 09 mediante la revisión administrativa.
+RN- La creación de vacante genera una evaluación asociada con duración inicial de 30 minutos. Su 10 configuración puede modificarse.
+RN- La vacante admite edición y estados open, closed y draft. El cierre cambia su estado e impide 11 nuevas postulaciones.
+
+48
+
+ID Descripción RN- La eliminación de una vacante o evaluación se bloquea cuando existen intentos asociados a sus 12 evaluaciones. 3.2.5 Casos de uso
+La figura siguiente presenta el diagrama de casos de uso del sistema, con los dos actores principales y el servicio de autenticación como actor de sistema.
+49
+
+Figura 2 Diagrama de casos de uso del sistema
+Nota. Elaboración propia con notación UML 2.5.1. 50
+
+La relación <<include>> entre CU-05 y CU-04 indica que el cuestionario base es un requisito previo de la postulación; la relación <<extend>> de CU-07 hacia CU-06 indica que la carga de evidencia es una extensión opcional de la evaluación. El catálogo de casos de uso y su especificación se presentan a continuación.
+
+Tabla 15 Catálogo de casos de uso
+
+ID CU-01 CU-02 CU-03 CU-04 CU-05 CU-06 CU-07 CU-08 CU-09 CU-10 CU-11 CU-12 CU-13 CU-14
+
+Caso Registrar cuenta Iniciar y cerrar sesión Consultar módulos y vacantes Completar cuestionario base Postularse a una vacante Responder una evaluación Cargar evidencia Enviar evaluación Consultar perfil y seguimiento Administrar módulos Administrar vacantes Configurar evaluaciones y preguntas Consultar intentos y evidencias Registrar decisión y observaciones
+
+CU-01 Registrar cuenta
+
+Actor Postulante Postulante o administrador Postulante Postulante Postulante Postulante Postulante Postulante Postulante Administrador Administrador Administrador Administrador Administrador
+
+Tabla 16 Especificación de CU-01
+
+Elemento Actor Condiciones previas Resultado
+
+Descripción Postulante No contar con una cuenta correspondiente a la CURP proporcionada. Cuenta, perfil, huella de CURP y rol de postulante registrados.
+
+Flujo principal
+
+51
+
+1. La persona abre el registro y captura correo, contraseña y CURP. 2. El sistema comprueba los campos, normaliza la CURP y consulta su huella. 3. Si no existe duplicación, crea la cuenta y sus registros relacionados. 4. La interfaz solicita el inicio de sesión y presenta el panel al completarlo. Alternativas y precisiones Si faltan datos, el formato es inválido, la CURP ya está registrada o falla el servicio, se informa el problema. El flujo no requiere confirmación del correo.
+CU-02 Iniciar y cerrar sesión
+
+Tabla 17 Especificación de CU-02
+
+Elemento Actor Condiciones previas Resultado
+
+Descripción Postulante o administrador Disponer de una cuenta con credenciales. Sesión establecida y panel presentado, o sesión terminada al salir.
+
+Flujo principal 1. La persona proporciona correo y contraseña en el acceso. 2. El servicio valida las credenciales. 3. La aplicación consulta el rol y muestra las opciones del panel. 4. Cuando selecciona Salir, se termina la sesión del cliente y se dirige al acceso. Alternativas y precisiones Ante credenciales inválidas se muestra un mensaje. Si ya existe sesión al abrir el formulario se dirige al panel. La recuperación de contraseña se propone como trabajo futuro.
+
+52
+
+CU-03 Consultar módulos y vacantes
+
+Tabla 18 Especificación de CU-03
+Elemento Actor Condiciones previas Resultado
+
+Descripción Postulante Acceder al panel de la plataforma. Información de una oportunidad consultada.
+
+Flujo principal 1. La persona revisa los módulos del panel. 2. Selecciona una agrupación y consulta sus convocatorias. 3. Abre una vacante para revisar descripción, requisitos, horario y ubicación. 4. Consulta la información de evaluación y la acción para postularse. Alternativas y precisiones Una lista puede no contener vacantes. El estado open se valida nuevamente al iniciar la postulación.
+
+CU-04 Completar cuestionario base
+
+Tabla 19 Especificación de CU-04
+
+Elemento Actor Condiciones previas Resultado
+
+Descripción Postulante Contar con sesión y disponer del instrumento base configurado. Intento base enviado y requisito previo reconocido como completo.
+
+Flujo principal 1. La persona selecciona iniciar el cuestionario base. 2. El sistema consulta si existe un intento completo o uno pendiente.
+
+53
+
+3. Si corresponde, recupera el intento pendiente o genera uno con fecha límite. 4. La persona responde y envía mediante el recorrido de evaluación. Alternativas y precisiones Un intento enviado satisface la condición previa; no se requiere aprobación ni una puntuación mínima.
+CU-05 Postularse a una vacante
+
+Tabla 20 Especificación de CU-05
+
+Elemento Actor Condiciones previas Resultado
+
+Descripción Postulante Sesión válida, cuestionario base completo, vacante abierta y evaluación disponible. Postulación e identificador de intento disponibles.
+
+Flujo principal 1. La persona selecciona Postularme ahora en el detalle. 2. El sistema valida sesión, requisito base y estado de la convocatoria. 3. Busca la postulación de la persona a la vacante y la utiliza o crea el registro. 4. Recupera un intento no enviado cuando lo obtiene o genera uno nuevo con inicio y fecha límite. 5. La interfaz abre la evaluación. Alternativas y precisiones La falta del cuestionario base dirige a completarlo. Una vacante no abierta o sin evaluación impide el inicio. El modelo de datos admite varios intentos por postulación.
+
+54
+
+CU-06 Responder una evaluación
+
+Tabla 21 Especificación de CU-06
+
+Elemento Actor Condiciones previas Resultado
+
+Descripción Postulante Contar con un intento propio no enviado y dentro del plazo para guardar respuestas. Opciones seleccionadas asociadas a preguntas e intento.
+
+Flujo principal 1. La interfaz muestra preguntas, opciones, progreso y tiempo restante. 2. La persona selecciona una opción. 3. El sistema comprueba pertenencia, fecha límite y condición de no enviado. 4. Guarda o actualiza la respuesta de la combinación intento-pregunta. 5. La interfaz presenta el progreso actualizado. Alternativas y precisiones Si vence el plazo o el intento fue enviado, el servidor rechaza el guardado. Al vencer el tiempo, la interfaz envía automáticamente si la página permanece abierta.
+
+CU-07 Cargar evidencia
+
+Tabla 22 Especificación de CU-07
+Elemento Actor Condiciones previas Resultado
+
+Descripción Postulante Tener un intento con controles de entrega disponibles. Archivo y referencia de evidencia asociados al intento.
+
+Flujo principal 1. La persona consulta las instrucciones prácticas.
+
+55
+
+2. Selecciona un archivo mediante el control de imágenes o PDF. 3. La plataforma envía el archivo al almacenamiento. 4. Registra ubicación, tipo, tamaño y fecha como referencia del intento. 5. Muestra la evidencia registrada o el mensaje correspondiente. Alternativas y precisiones Un fallo en almacenamiento o registro se comunica a la persona. La evidencia se entrega como archivo y no es obligatoria para enviar el intento.
+CU-08 Enviar evaluación
+
+Tabla 23 Especificación de CU-08
+
+Elemento Actor Condiciones previas Resultado
+
+Descripción Postulante Sesión válida y un intento propio que aún no tenga fecha de envío. Intento en UNDER_REVIEW con fecha de envío e indicadores generados.
+
+Flujo principal 1. La persona selecciona Enviar evaluación o el cliente inicia el envío por tiempo. 2. El sistema valida sesión, pertenencia y ausencia de envío previo. 3. Consulta preguntas y respuestas y genera el resumen previsto. 4. Conserva puntaje, fecha de envío y estado de revisión. 5. Presenta la confirmación y la opción de volver al panel. Alternativas y precisiones Un intento previamente enviado no se remite nuevamente. Si la entrega ocurre después del límite, el hecho se registra en los metadatos del intento.
+
+56
+
+CU-09 Consultar perfil y seguimiento
+
+Tabla 24 Especificación de CU-09
+
+Elemento Actor Condiciones previas Resultado
+
+Descripción Postulante Contar con sesión. Información disponible de intentos y revisión consultada.
+
+Flujo principal 1. La persona abre Mi perfil. 2. El sistema obtiene los intentos relacionados con sus postulaciones. 3. Presenta vacante, módulo, fechas, estado, decisión y notas disponibles. 4. Resume los registros en los contadores del perfil. Alternativas y precisiones Si no hay registros se muestra el estado vacío. Los contadores corresponden a intentos, incluido el del cuestionario base.
+
+CU-10 Administrar módulos
+
+Tabla 25 Especificación de CU-10
+
+Elemento Actor Condiciones previas Resultado
+
+Descripción Administrador Contar con sesión y rol administrativo. Nombre y descripción del módulo registrados o actualizados.
+
+Flujo principal 1. El administrador abre el apartado Módulos. 2. Captura nombre y descripción para crear una agrupación.
+
+57
+
+3. Guarda y consulta el catálogo actualizado. 4. Para modificar, selecciona Editar, ajusta datos y guarda. Alternativas y precisiones El nombre es obligatorio. La interfaz permite crear y editar módulos.
+CU-11 Administrar vacantes
+
+Tabla 26 Especificación de CU-11
+
+Elemento Actor Condiciones previas Resultado
+
+Descripción Administrador Contar con autorización administrativa. Convocatoria creada, modificada, cerrada o eliminada cuando procede.
+
+Flujo principal 1. El administrador captura título, módulo, horario, ubicación, descripción y requisitos. 2. Selecciona el estado y guarda. 3. El sistema crea la vacante y su evaluación asociada al registrar una nueva convocatoria. 4. El administrador puede consultar y modificar datos y estado. 5. Para eliminar, el sistema comprueba si existen intentos asociados a sus evaluaciones. Alternativas y precisiones El título es obligatorio. La eliminación se bloquea cuando hay intentos. Cerrar la vacante cambia su disponibilidad para nuevas postulaciones; no cancela entrevistas ni rechaza todos los registros.
+
+58
+
+CU-12 Configurar evaluaciones y preguntas
+
+Tabla 27 Especificación de CU-12
+Elemento Actor Condiciones previas Resultado
+
+Descripción Administrador Contar con autorización y evaluación asociada. Configuración y preguntas actualizadas.
+
+Flujo principal 1. El administrador selecciona una evaluación y edita título o duración. 2. Captura una pregunta y una o más opciones. 3. Indica respuesta de referencia cuando corresponde y guarda. 4. Puede editar o eliminar preguntas y gestionar la evaluación. Alternativas y precisiones El enunciado y al menos una opción son requeridos por el servicio de preguntas. La eliminación de una evaluación se bloquea si tiene intentos. Las preguntas son de opción múltiple.
+
+CU-13 Consultar intentos y evidencias
+
+Tabla 28 Especificación de CU-13
+
+Elemento Actor Condiciones previas Resultado
+
+Descripción Administrador Contar con autorización administrativa y registros disponibles. Detalle de un intento consultado para revisión.
+
+Flujo principal 1. El administrador abre Intentos. 2. Consulta los registros y selecciona Ver revisión.
+
+59
+
+3. La aplicación obtiene candidato, vacante, módulo, fechas y estado. 4. Presenta respuestas, archivos de evidencia e indicadores disponibles. Alternativas y precisiones Si no hay respuestas o archivos se muestra el estado vacío. El acceso a una evidencia depende de que se obtenga una dirección temporal válida.
+CU-14 Registrar decisión y observaciones
+
+Tabla 29 Especificación de CU-14
+
+Elemento Actor Condiciones previas Resultado
+
+Descripción Administrador Contar con autorización y un intento existente. Estado, decisión u observaciones guardados según la acción seleccionada.
+
+Flujo principal 1. El administrador revisa la información del intento. 2. Selecciona Aprobar, Rechazar o Marcar en revisión, o captura notas y decisión. 3. La aplicación valida los valores y actualiza el estado correspondiente. 4. Registra la decisión y notas mediante la estructura de revisión disponible. 5. Presenta el detalle actualizado. Alternativas y precisiones La aprobación es una decisión de Recursos Humanos y no depende de una puntuación mínima. La decisión se registra en la tabla reviews y en el campo decision de attempts.
+
+3.2.6 Modelos de procesos y estados El diagrama de actividad de la figura siguiente representa el recorrido principal del
+postulante, desde el acceso hasta la consulta del resultado.
+
+60
+
+Figura 3 Diagrama de actividad del proceso principal de participación
+Nota. Elaboración propia. Las validaciones fallidas muestran un mensaje y no continúan al siguiente paso. 61
+
+El cuestionario base utiliza una vacante interna para mantener la misma estructura de postulaciones e intentos. Una vez completado, el postulante puede iniciar la postulación a cualquier vacante abierta. El registro de respuestas y evidencias precede al envío y a la revisión de Recursos Humanos.
+La figura siguiente muestra los estados que puede adoptar un intento de evaluación y los eventos que provocan cada transición.
+Figura 4 Diagrama de estados del intento de evaluación
+
+Nota. Elaboración propia.
+
+Tabla 30 Estados y decisiones por entidad
+
+Entidad Vacante
+
+Valores open, closed, draft
+
+Interpretación Disponibilidad y publicación gestionadas por el administrador; la columna no declara CHECK.
+62
+
+Entidad Postulación
+Intento
+Decisión del intento Decisión de revisión
+
+Valores PENDING, UNDER_REVIEW, EVALUATED, APPROVED, REJECTED IN_PROGRESS, SUBMITTED, UNDER_REVIEW, COMPLETED APPROVED, REJECTED o nulo
+APPROVED, REJECTED, INFO_REQUIRED o nulo
+
+Interpretación Valores admitidos en applications.status. No equivalen al estado mostrado por todos los paneles. Estado de la participación en una evaluación.
+Dato separado del estado en attempts.
+Valores admitidos por reviews; la interfaz de decisión normaliza aprobación y rechazo.
+
+El cierre de una vacante cambia su disponibilidad para nuevas postulaciones, pero no modifica las decisiones de los intentos ya registrados. Los estados de la vacante, de la postulación y del intento se modelan por separado porque representan situaciones distintas.
+
+3.3 Diseño de software
+3.3.1 Arquitectura de diseño El sistema sigue una arquitectura en capas sobre el modelo cliente-servidor, con los
+servicios de datos delegados a Supabase. La capa de presentación se ejecuta en el navegador y está formada por páginas y componentes de React; la capa de aplicación corresponde a las rutas y servicios de Next.js, que validan los datos y comprueban la sesión y el rol antes de cada operación; y la capa de servicios de datos comprende Supabase Auth, la base de datos PostgreSQL y Supabase Storage.
+
+63
+
+Figura 5 Arquitectura lógica del sistema
+
+Nota. Elaboración propia.
+
+Tabla 31 Responsabilidades de los componentes
+
+Componente Interfaz web Servicios de aplicación
+Autenticación
+Autorización Base relacional Almacenamiento de archivos
+
+Responsabilidad
+Presentar formularios, listas, paneles, preguntas y mensajes.
+Procesar registro, postulación, respuestas, envío y acciones administrativas.
+Gestionar cuentas y sesiones; identificar la cuenta asociada a una solicitud.
+Comprobar rol o pertenencia según la operación atendida.
+Conservar entidades, relaciones y restricciones del proceso.
+Conservar evidencias y permitir su recuperación mediante referencias autorizadas.
+
+La figura siguiente muestra el diagrama de despliegue. La aplicación Next.js se aloja en un servidor con entorno Node.js y se comunica mediante HTTPS con el navegador del usuario y con los servicios de Supabase. Los archivos de evidencia se descargan directamente desde Storage mediante URL firmadas con vigencia limitada.
+
+64
+
+Figura 6 Diagrama de despliegue
+Nota. Elaboración propia. Mecanismos de seguridad. El diseño incorpora los siguientes controles:
+· Autenticación: Supabase Auth gestiona las cuentas y sesiones; toda página protegida verifica la sesión y dirige al inicio de sesión cuando no existe.
+· Autorización por rol: antes de atender una operación administrativa se consulta el rol de la cuenta, de modo que solo el administrador accede a las rutas y servicios de gestión.
+· Pertenencia del recurso: al guardar respuestas y enviar un intento, el servidor verifica que el intento pertenezca a la cuenta que realiza la solicitud.
+· Validación de entradas: los datos recibidos se validan en el servidor contra un esquema definido antes de procesarse.
+· Protección de la CURP: la CURP se normaliza y se almacena como huella HMAC en la tabla curp_hashes, con una restricción de unicidad que impide registrar dos cuentas con la misma CURP.
+· Acceso a evidencias: los archivos se guardan en el contenedor evidences de Supabase Storage y solo se accede a ellos mediante URL firmadas que vencen a los 60 minutos; únicamente el administrador (durante la revisión) y el propio postulante pueden obtenerlas. 65
+
+Los diagramas de secuencia de las figuras siguientes detallan el intercambio de mensajes en las dos operaciones centrales del sistema: iniciar una postulación y enviar una evaluación para su revisión. Figura 7 Diagrama de secuencia para iniciar una postulación
+Nota. Elaboración propia.
+66
+
+Figura 8 Diagrama de secuencia para enviar y revisar una evaluación
+Nota. Elaboración propia. La ruta de envío corresponde a /attempts/[id]/submit. 3.3.2 Diseño de interfaz
+Las interfaces se organizan en tres grupos: acceso, participación del postulante y administración. Todas comparten una estructura de tarjetas, encabezados con el título de la sección, estados visibles mediante etiquetas y una acción principal resaltada en color naranja. La paleta combina tonos oscuros para la navegación, fondos claros para el contenido y acentos en naranja y azul, de acuerdo con la solicitud de Recursos Humanos de respetar la identidad visual de la institución.
+En el diseño se aplicaron las heurísticas de Nielsen (1994): visibilidad del estado del sistema (barra de progreso, temporizador y etiquetas de estado), prevención de errores (validación de formularios y bloqueo de acciones no permitidas), reconocimiento antes que recuerdo (navegación por módulos y tarjetas), consistencia (mismos componentes y colores en todas las pantallas) y ayuda para reconocer errores (mensajes que indican qué ocurrió y cómo corregirlo).
+67
+
+La figura siguiente muestra el mapa de navegación del sistema con sus rutas principales.
+Figura 9 Mapa de navegación del sistema
+
+Nota. Elaboración propia. Las rutas de administración solo son accesibles para el rol administrador.
+
+Tabla 32 Inventario de interfaces
+
+ID Interfaz
+UI- Inicio 01
+UI- Inicio de sesión 02
+UI- Registro 03
+UI- Panel principal 04
+UI- Vacantes del módulo 05
+UI- Detalle de vacante 06
+UI- Evaluación 07
+UI- Confirmación 08
+UI- Perfil 09
+
+Contenido principal Presentación del sistema y accesos a sesión y registro.
+Correo, contraseña, envío y enlace al registro.
+Correo, contraseña y CURP; resultado y acceso al panel.
+Rol, situación del cuestionario base, módulos y navegación al perfil.
+Convocatorias agrupadas, horario, ubicación y acceso al detalle.
+Descripción, requisitos, estado e inicio de postulación.
+Preguntas, opciones, progreso, tiempo, instrucciones prácticas, archivos y envío. Estado del envío y regreso al panel.
+Listado de intentos, contadores, decisiones, notas y fechas.
+
+68
+
+ID Interfaz
+UI- Resumen 10 administrativo
+UI- Gestión de módulos 11
+UI- Gestión de vacantes 12
+UI- Evaluaciones y 13 preguntas
+UI- Listado de intentos 14
+UI- Revisión del intento 15
+
+Contenido principal Totales de entidades, actividad reciente y accesos de gestión. Nombre, descripción, listado y edición. Datos de convocatoria, estado, filtro y acciones de gestión. Título, duración, opciones y respuesta de referencia. Resumen de registros y acceso a revisión. Datos, resumen de indicadores, respuestas, archivos, decisión y notas.
+
+A continuación se describe cada interfaz con su captura correspondiente.
+
+Interfaces de acceso La pantalla de inicio (UI-01) presenta el propósito de la plataforma y los accesos para iniciar sesión o crear una cuenta. El bloque lateral muestra etapas y cifras ilustrativas que explican el proceso al visitante.
+
+Figura 10 Pantalla de inicio (UI-01)
+
+Nota. Captura del sistema. 69
+
+El formulario de inicio de sesión (UI-02) solicita correo y contraseña e incluye un enlace al registro. Si las credenciales son inválidas, se muestra un mensaje sin revelar cuál de los dos datos es incorrecto. Figura 11 Formulario de inicio de sesión (UI-02)
+Nota. Captura del sistema. El formulario de registro (UI-03) solicita correo, contraseña y CURP. El sistema valida el
+formato de la CURP y comprueba que su huella no exista antes de crear la cuenta.
+70
+
+Figura 12 Formulario de registro (UI-03)
+Nota. Captura del sistema. Interfaces del postulante El panel principal (UI-04) muestra el rol de la cuenta, la situación del cuestionario base y
+el acceso para completarlo, así como la navegación al perfil. Figura 13 Panel principal del postulante (UI-04)
+Nota. Captura del sistema. 71
+
+Debajo del aviso del cuestionario base se presenta el catálogo de módulos, que organiza las vacantes por departamento. Figura 14 Catálogo de módulos (UI-04)
+Nota. Captura del sistema. Al seleccionar un módulo se muestran sus vacantes (UI-05) con horario, ubicación, estado
+y el acceso al detalle. Figura 15 Vacantes del módulo Tecnología (UI-05)
+Nota. Captura del sistema. 72
+
+El detalle de la vacante (UI-06) reúne la descripción del puesto, los requisitos y el botón «Postularme ahora», que inicia la postulación. Figura 16 Detalle de la vacante (UI-06)
+Nota. Captura del sistema. La pantalla de evaluación (UI-07) se utiliza tanto para el cuestionario base como para las
+evaluaciones de cada vacante. En el cuestionario base muestra el título, la duración, el progreso y la escala de respuesta de uno a cinco.
+73
+
+Figura 17 Cuestionario base en curso (UI-07)
+Nota. Captura del sistema. Cada reactivo se responde seleccionando una opción; la respuesta se guarda de forma
+individual y la barra de progreso se actualiza. Figura 18 Reactivos del cuestionario base (UI-07)
+Nota. Captura del sistema. 74
+
+En las evaluaciones de vacante, la pantalla se divide en una sección teórica de opción múltiple y una sección práctica con las instrucciones, la entrega esperada y el control de carga de evidencia. El temporizador indica el tiempo restante y el botón «Enviar evaluación» finaliza el intento. Figura 19 Evaluación con sección teórica y práctica (UI-07)
+Nota. Captura del sistema. La captura corresponde a una evaluación de prueba sin preguntas registradas. Al enviar, la pantalla de confirmación (UI-08) informa que la evaluación fue recibida y que
+su estado es «en revisión», con la opción de regresar al panel.
+75
+
+Figura 20 Confirmación del envío (UI-08)
+Nota. Captura del sistema. El perfil (UI-09) muestra los contadores de intentos y el listado de evaluaciones con su
+vacante, fecha, estado, decisión y notas. Cuando aún no hay registros se presenta un estado vacío. Figura 21 Perfil del postulante (UI-09)
+Nota. Captura del sistema.
+76
+
+Interfaces de administración Cuando la cuenta tiene rol de administrador, el panel principal muestra el acceso al área administrativa. Figura 22 Panel de una cuenta administrativa (UI-04)
+Nota. Captura del sistema. El resumen administrativo (UI-10) presenta la navegación de gestión y los totales de
+módulos, vacantes, evaluaciones e intentos. Figura 23 Resumen administrativo (UI-10)
+Nota. Captura del sistema. 77
+
+En la parte inferior del resumen se listan los registros recientes y los accesos rápidos a cada sección de gestión. Figura 24 Actividad reciente y accesos de gestión (UI-10)
+Nota. Captura del sistema. La gestión de módulos (UI-11) permite capturar el nombre y la descripción de cada
+agrupación y editarlas posteriormente.
+78
+
+Figura 25 Administración de módulos (UI-11)
+Nota. Captura del sistema. La gestión de vacantes (UI-12) reúne los campos de la convocatoria, la selección de módulo
+y estado, y un filtro por módulo para el listado.
+79
+
+Figura 26 Administración de vacantes (UI-12)
+Nota. Captura del sistema. La gestión de evaluaciones (UI-13) permite seleccionar una evaluación, modificar su título
+y duración, y agregar preguntas con sus opciones y respuesta de referencia.
+80
+
+Figura 27 Administración de evaluaciones y preguntas (UI-13)
+Nota. Captura del sistema. El listado de intentos (UI-14) resume los registros recibidos y permite abrir la revisión de
+cada uno.
+81
+
+Figura 28 Listado de intentos (UI-14)
+Nota. Captura del sistema. La revisión del intento (UI-15) vincula al candidato con la vacante, el módulo, las fechas,
+el estado y la decisión. Figura 29 Resumen de un intento (UI-15)
+Nota. Captura del sistema. 82
+
+Para el cuestionario base, la revisión presenta las cinco dimensiones con su puntuación y la etiqueta generada, así como la cantidad de respuestas consideradas. Figura 30 Indicadores del cuestionario base (UI-15)
+Nota. Captura del sistema. En la captura el intento no tiene respuestas, por lo que los indicadores aparecen en cero.
+Finalmente, el administrador registra la decisión (aprobar, rechazar o marcar en revisión) y sus notas, y consulta las respuestas y evidencias del intento.
+83
+
+Figura 31 Acciones de revisión y registros asociados (UI-15)
+
+Nota. Captura del sistema. 3.3.3 Diseño de salidas
+Las salidas del sistema se presentan en pantalla y se dirigen a dos destinatarios: el postulante y el administrador. La tabla siguiente las resume.
+
+Tabla 33 Catálogo de salidas
+ID Salida
+S- Listado de vacantes 01
+S- Detalle de convocatoria 02
+S- Progreso de evaluación 03
+S- Confirmación de envío 04
+S- Seguimiento personal 05
+S- Resumen administrativo 06
+
+Destinatario Contenido Postulante Título, módulo, horario, ubicación y estado.
+
+Postulante Postulante
+
+Descripción, requisitos y orientación de evaluación.
+Preguntas respondidas, total y tiempo restante.
+
+Postulante Folio de intento, estado y mensaje de recepción.
+
+Postulante
+
+Intentos, vacantes, estados, decisiones, notas y fechas.
+
+Administrador Conteos por entidad, vacantes abiertas y actividad reciente.
+
+84
+
+ID Salida
+
+Destinatario Contenido
+
+S- Listado de intentos 07
+
+Administrador Participantes, convocatoria, estado y acceso al detalle.
+
+S- Detalle de revisión 08
+
+Administrador Datos del intento, respuestas, evidencia y valoración.
+
+S- Resumen del instrumento Administrador Puntuaciones por dimensión, etiquetas y cantidad
+
+09 base
+
+de respuestas.
+
+El mensaje de la pantalla de confirmación que indica una revisión estimada de dos a tres días es un texto informativo para el postulante, que Recursos Humanos puede ajustar según sus tiempos reales de respuesta.
+
+Indicadores del cuestionario base El cuestionario base, denominado MINI BIG FIVE, contiene veinte preguntas de escala de uno a cinco, agrupadas en estabilidad emocional, amabilidad, responsabilidad, apertura y extroversión. La configuración inicial asigna diez minutos. El procesamiento suma las respuestas reconocidas por dimensión y conserva el número de respuestas consideradas. En el envío, theory_score representa el porcentaje de respuestas Likert reconocidas respecto de veinte, redondeado a un entero. Una respuesta se considera para ese conteo cuando su valor se interpreta entre uno y cinco y la pregunta corresponde a una dimensión reconocida. El cálculo no compara respuestas con correct_option ni obtiene una media de evaluaciones sobre diez.
+
+Tabla 34 Etiquetas del resumen generado
+
+Dimensión Estabilidad emocional Amabilidad Responsabilidad Apertura
+
+Suma de 16 o más Alta Cooperativo Alto compromiso Innovador/adaptable
+
+Suma de 11 a 15 Adecuada Funcional Aceptable Moderado
+
+Suma inferior a 11 Riesgo reactividad Riesgo conflicto Riesgo incumplimiento Rigidez
+
+85
+
+Dimensión
+
+Suma de 16 o más Suma de 11 a 15 Suma inferior a 11
+
+Extroversión
+
+Indicador sin filtro
+
+Indicador sin filtro Indicador sin filtro
+
+Nota. Etiquetas generadas por el sistema. Son un apoyo para la revisión y no constituyen un diagnóstico psicométrico.
+
+La estructura informa un intervalo de cuatro a veinte por dimensión, correspondiente a
+
+cuatro reactivos respondidos. Si faltan respuestas, la suma puede ser inferior a cuatro y la
+
+clasificación puede reflejar esa información incompleta. La cantidad de respuestas debe
+
+conservarse como contexto. La extroversión aparece expresamente como indicador de integración
+
+y no como filtro de contratación.
+
+El envío aplica este procesamiento a todos los intentos; por ello, en las evaluaciones de
+
+conocimientos el valor de theory_score no representa un porcentaje de aciertos. La calificación
+
+por respuesta correcta se propone como trabajo futuro, y la decisión sobre cada intento corresponde
+
+a Recursos Humanos.
+
+3.4 Diseño de datos
+3.4.1 Estructura de datos El esquema público de la base de datos contiene trece tablas y setenta y dos campos. La
+tabla auth.users pertenece al servicio de autenticación de Supabase y se referencia desde las tablas del esquema público.
+
+Tabla 35 Entidades del esquema público
+
+Tabla profiles user_roles curp_hashes modules
+
+Propósito Perfil de la cuenta Rol de acceso Huella de CURP Agrupación de oportunidades
+
+86
+
+Tabla vacancies applications assessments questions practical_tasks attempts answers evidence_uploads reviews
+
+Propósito Convocatoria laboral Vínculo de persona con vacante Evaluación asociada Reactivos y opciones Instrucciones de actividad práctica Participación en una evaluación Respuesta por pregunta e intento Referencia a archivos Registro de valoración administrativa
+
+La tabla applications conserva la postulación y attempts cada participación en una evaluación. El instrumento base se integra con la misma estructura mediante una vacante interna. Las respuestas, las evidencias y las revisiones dependen del intento. Los archivos se conservan en almacenamiento y evidence_uploads contiene su referencia, no el contenido binario.
+
+3.4.2 Diagrama entidad-relación La figura siguiente presenta el modelo entidad-relación en notación de Chen. Para facilitar
+su lectura, se muestran los atributos principales de las entidades centrales; el conjunto completo de atributos se encuentra en el diagrama relacional y en el diccionario de datos.
+
+87
+
+Figura 32 Diagrama entidad-relación en notación de Chen
+Nota. Elaboración propia. 1 y N indican la cardinalidad máxima de cada participación. Las relaciones principales son: un módulo agrupa varias vacantes; una vacante recibe
+varias postulaciones y se evalúa con una o más evaluaciones; una evaluación contiene preguntas y actividades prácticas; cada postulación genera uno o más intentos; y cada intento registra respuestas, se respalda con evidencias y es valorado mediante revisiones que emite un perfil con rol de administrador.
+88
+
+3.4.3 Diagrama relacional El diagrama relacional de la figura siguiente muestra las trece tablas con sus campos, claves
+primarias (PK), claves foráneas (FK) y restricciones de unicidad (UQ), en notación de pata de gallo. El asterisco indica los campos obligatorios. Figura 33 Diagrama relacional de la base de datos
+Nota. Elaboración propia a partir de las consultas de columnas y restricciones del esquema en Supabase. 89
+
+Tabla 36 Claves foráneas y acciones al eliminar
+
+Campo profiles.user_id user_roles.user_id curp_hashes.user_id vacancies.module_id applications.user_id applications.vacancy_id assessments.vacancy_id questions.assessment_id questions.created_by practical_tasks.assessment_id attempts.application_id attempts.assessment_id answers.attempt_id answers.question_id evidence_uploads.attempt_id reviews.attempt_id reviews.reviewer_id
+
+Referencia auth.users.id auth.users.id profiles.user_id modules.id profiles.user_id vacancies.id vacancies.id assessments.id profiles.user_id assessments.id applications.id assessments.id attempts.id questions.id attempts.id attempts.id profiles.user_id
+
+Admite nulo No No No Sí Sí Sí Sí Sí Sí Sí Sí Sí Sí Sí Sí Sí Sí
+
+Acción Sin acción explícita CASCADE CASCADE SET NULL CASCADE CASCADE CASCADE CASCADE Sin acción explícita CASCADE CASCADE Sin acción explícita CASCADE CASCADE CASCADE CASCADE Sin acción explícita
+
+CASCADE elimina los registros dependientes alcanzados por la relación; SET NULL conserva la vacante y elimina su asociación al módulo. Las relaciones sin una acción explícita mantienen el comportamiento predeterminado de la base. Los bloqueos de eliminación aplicados por servicios de administración son controles adicionales al esquema y no cambian estas definiciones.
+
+Tabla 37 Restricciones de unicidad y validación
+
+Elemento Claves primarias
+
+Definición
+id en las tablas de entidades; user_id en profiles y user_roles; combinación user_id y curp_hash en curp_hashes.
+
+90
+
+Elemento Huella de CURP Respuesta por reactivo Estados de postulación Estados de intento
+Decisión del intento Decisión de revisión Roles en profiles Roles en user_roles
+
+Definición UNIQUE en curp_hash. No implica UNIQUE de user_id en esa tabla. UNIQUE de attempt_id y question_id. Ambos campos admiten nulos.
+CHECK de PENDING, UNDER_REVIEW, EVALUATED, APPROVED y REJECTED. CHECK de IN_PROGRESS, SUBMITTED, UNDER_REVIEW y COMPLETED. Nulo, APPROVED o REJECTED.
+APPROVED, REJECTED o INFO_REQUIRED; la columna admite nulo.
+user, admin o reviewer; la columna admite nulo. user o admin; la columna es obligatoria.
+
+No se declara unicidad del par usuario-vacante en applications, del par postulaciónevaluación en attempts ni de vacancy_id en assessments. Por tanto, esas relaciones se documentan como potencialmente múltiples. Los valores predeterminados no obligan a llenar un campo si la columna admite explícitamente nulo.
+
+3.4.4 Diccionario de datos El diccionario conserva los nombres técnicos para facilitar su correspondencia con el
+esquema. UUID identifica valores de tipo uuid; texto corresponde a text; fecha-hora TZ corresponde a timestamp with time zone; JSONB conserva estructuras JSON; numérico corresponde a numeric. PK indica clave primaria y FK, clave foránea. Los valores predeterminados se diferencian de la obligatoriedad.
+
+Tabla 38 Diccionario de profiles
+
+Campo user_id
+
+Tipo UUID
+
+Nulo Significado y clave No PK; FK auth.users.id
+
+Predeterminado Sin predeterminado
+
+91
+
+Campo name email role created_at
+
+Tipo Texto Texto Texto Fecha-hora TZ
+
+Nulo Sí Sí Sí Sí
+
+Significado y clave Nombre del perfil Correo del perfil user, admin o reviewer Fecha de creación
+
+Predeterminado Nulo Nulo user now()
+
+Tabla 39 Diccionario de user_roles
+
+Campo user_id role created_at updated_at
+
+Tipo UUID Texto Fecha-hora TZ Fecha-hora TZ
+
+Nulo No No No No
+
+Significado y clave PK; FK auth.users.id user o admin Fecha de creación Fecha de actualización
+
+Predeterminado Sin predeterminado user now() now()
+
+Tabla 40 Diccionario de curp_hashes
+
+Campo user_id curp_hash
+
+Tipo UUID Texto
+
+Nulo No No
+
+Significado y clave Parte de PK; FK profiles.user_id Parte de PK; UNIQUE; huella de CURP
+
+Predeterminado Sin predeterminado Sin predeterminado
+
+Tabla 41 Diccionario de modules
+
+Campo id name description
+
+Tipo UUID Texto Texto
+
+Nulo No No Sí
+
+Significado y clave PK del módulo Nombre del módulo Descripción del módulo
+
+Predeterminado uuid_generate_v4() Sin predeterminado Nulo
+
+Tabla 42 Diccionario de vacancies
+
+Campo id module_id
+
+Tipo UUID UUID
+
+Nulo No Sí
+
+Significado y clave PK de vacante FK modules.id
+
+Predeterminado uuid_generate_v4() Nulo
+
+92
+
+Campo title schedule location description requirements status
+
+Tipo Texto Texto Texto Texto Texto Texto
+
+Nulo No Sí Sí Sí Sí Sí
+
+Significado y clave Título del puesto Horario Ubicación Descripción de convocatoria Requisitos de participación Estado; sin CHECK declarado
+
+Predeterminado Sin predeterminado Nulo Nulo Nulo Nulo open
+
+Tabla 43 Diccionario de applications
+
+Campo id user_id vacancy_id status created_at
+
+Tipo UUID UUID UUID Texto Fecha-hora TZ
+
+Nulo No Sí Sí Sí Sí
+
+Significado y clave PK de postulación FK profiles.user_id FK vacancies.id Estado de postulación; CHECK Fecha de creación
+
+Predeterminado uuid_generate_v4() Nulo Nulo PENDING now()
+
+Tabla 44 Diccionario de assessments
+
+Campo id vacancy_id title duration_minutes
+
+Tipo UUID UUID Texto Entero
+
+Nulo No Sí Sí Sí
+
+Significado y clave PK de evaluación FK vacancies.id Título de evaluación Duración en minutos
+
+Predeterminado uuid_generate_v4() Nulo Nulo 30
+
+Tabla 45 Diccionario de questions
+
+Campo
+
+Tipo
+
+id
+
+UUID
+
+assessment_id UUID
+
+prompt
+
+Texto
+
+Nulo Significado y clave No PK de pregunta Sí FK assessments.id No Enunciado; puede contener etiquetas del
+instrumento
+
+Predeterminado uuid_generate_v4() Nulo Sin predeterminado
+
+93
+
+Campo options
+
+Tipo Nulo Significado y clave JSONB No Opciones de respuesta
+
+correct_option Texto Sí created_by UUID Sí
+
+Respuesta de referencia FK profiles.user_id
+
+Predeterminado Sin predeterminado Nulo Nulo
+
+Tabla 46 Diccionario de practical_tasks
+
+Campo id assessment_id instructions expected_output max_score
+
+Tipo UUID UUID Texto Texto Entero
+
+Nulo No Sí No Sí Sí
+
+Significado y clave PK de actividad práctica FK assessments.id Instrucciones de actividad Entrega esperada Puntaje máximo definido en estructura
+
+Predeterminado uuid_generate_v4() Nulo Sin predeterminado Nulo 100
+
+Tabla 47 Diccionario de attempts
+
+Campo id application_id assessment_id started_at
+deadline_at
+submitted_at
+theory_score
+
+Tipo UUID
+UUID
+UUID Fecha-hora TZ
+Fecha-hora TZ
+Fecha-hora TZ
+Numérico
+
+psychometric_summary JSONB
+
+status decision
+
+Texto Texto
+
+Nulo Significado y clave No PK de intento Sí FK applications.id Sí FK assessments.id Sí Inicio del intento
+
+Predeterminado uuid_generate_v4() Nulo Nulo now()
+
+No Fecha límite Sí Fecha de envío
+
+Sin predeterminado
+Nulo
+
+Sí Indicador numérico del envío; no Nulo asumir aciertos
+
+Sí Resumen de dimensiones y metadatos
+
+Nulo
+
+Sí Estado del intento; CHECK
+
+IN_PROGRESS
+
+Sí APPROVED o REJECTED; ubicación alternativa
+
+Nulo
+
+94
+
+Campo reviewer_notes
+
+Tipo Texto
+
+Nulo Significado y clave
+Sí Notas de revisión; ubicación alternativa
+
+Predeterminado Nulo
+
+Tabla 48 Diccionario de answers
+
+Campo id attempt_id
+
+Tipo UUID UUID
+
+question_id UUID
+
+selected_option Texto
+
+created_at
+
+Fecha-hora TZ
+
+Nulo Significado y clave No PK de respuesta Sí FK attempts.id; UNIQUE con
+question_id Sí FK questions.id; UNIQUE con
+attempt_id
+Sí Opción seleccionada
+Sí Fecha de registro
+
+Predeterminado uuid_generate_v4() Nulo
+Nulo
+Nulo now()
+
+Tabla 49 Diccionario de evidence_uploads
+
+Campo id attempt_id bucket path mime_type size created_at
+
+Tipo UUID UUID Texto Texto Texto Entero Fecha-hora TZ
+
+Nulo No Sí Sí No Sí Sí Sí
+
+Significado y clave PK de evidencia FK attempts.id Contenedor del archivo Ruta del archivo Tipo MIME Tamaño registrado del archivo Fecha de registro
+
+Predeterminado uuid_generate_v4() Nulo evidences Sin predeterminado Nulo Nulo now()
+
+Tabla 50 Diccionario de reviews
+
+Campo Tipo
+
+id
+
+UUID
+
+attempt_id UUID
+
+reviewer_id UUID
+
+rubric
+
+JSONB
+
+Nulo Significado y clave No PK de revisión Sí FK attempts.id Sí FK profiles.user_id Sí Estructura de valoración o resumen
+
+Predeterminado uuid_generate_v4() Nulo Nulo Nulo
+
+95
+
+Campo decision
+
+Tipo Texto
+
+comments created_at
+
+Texto
+Fecha-hora TZ
+
+Nulo Significado y clave Sí APPROVED, REJECTED o
+INFO_REQUIRED Sí Observaciones de revisión Sí Fecha de creación
+
+Predeterminado Nulo
+Nulo now()
+
+El valor max_score tiene un predeterminado de cien en practical_tasks, pero el esquema no contiene una columna específica de calificación práctica por intento. Tampoco hay columnas de agenda de entrevistas o de currículum. La existencia de un atributo numérico no demuestra que se calcule una nota global de aprobación.
+reviews contiene comments y created_at; no contiene notes ni updated_at en la consulta proporcionada. La aplicación contempla variantes de persistencia y campos alternativos de decisión en attempts. Esta correspondencia debe tenerse presente al interpretar la información recuperada por los paneles.
+
+3.5 Trazabilidad del análisis y diseño La matriz de trazabilidad relaciona cada requisito funcional con el caso de uso, la interfaz
+y las tablas que lo atienden; la segunda matriz relaciona cada objetivo específico con los productos del informe.
+
+Tabla 51 Matriz de trazabilidad funcional
+
+Requisito RF-01 RF-02 RF-03 RF-04 RF-05 RF-06
+
+Caso CU-01 CU-01 CU-02 CU-03 CU-03 CU-04
+
+Interfaz UI-03 UI-03 UI-02 y UI-04 UI-04 a UI-06 UI-04 a UI-06 UI-04 y UI-07
+
+Datos principales profiles, user_roles, curp_hashes; auth.users profiles, user_roles, curp_hashes; auth.users user_roles; auth.users modules, vacancies, assessments modules, vacancies, assessments applications, attempts, assessments
+
+96
+
+Requisito RF-07 RF-08 RF-09 RF-10 RF-11 RF-12 RF-13 RF-14 RF-15 RF-16 RF-17 RF-18
+
+Caso CU-05 CU-06 CU-06 CU-07 CU-08 CU-09 CU-10 CU-11 CU-12 CU-12 CU-13 CU-14
+
+Interfaz UI-06 y UI-07 UI-07 UI-07 UI-07 UI-08 UI-09 UI-11 UI-12 UI-13 UI-13 UI-14 y UI-15 UI-15
+
+Datos principales applications, vacancies, attempts, assessments questions, answers, attempts questions, answers, attempts evidence_uploads, attempts attempts, answers, questions attempts, applications, vacancies, reviews modules vacancies, modules, assessments assessments, questions assessments, questions attempts, applications, answers, evidence_uploads reviews, attempts
+
+Tabla 52 Correspondencia de objetivos y productos
+
+Objetivo OE-01 OE-02 OE-03 OE-04 OE-05 OE-06
+
+Producto del informe Capítulo I y descripción operativa en 3.2.1. Alcance, catálogo RF/RNF y reglas en 3.2. Casos de uso y modelos de procesos y estados. Arquitectura lógica y responsabilidades de componentes. Relaciones, restricciones y diccionario de trece tablas. Inventario de interfaces, salidas y matriz funcional.
+
+3.6 Conclusiones del capítulo La aplicación del prototipado evolutivo permitió refinar los requisitos y el diseño con la
+participación de Recursos Humanos hasta obtener una versión aceptada por el área. El estudio de factibilidad mostró que el proyecto es técnica y operativamente viable y definió los conceptos para su valoración económica.
+
+97
+
+La especificación en los formatos IEEE 1362 e IEEE 830 organizó el sistema en dieciocho requisitos funcionales, siete requisitos no funcionales, doce reglas de negocio y catorce casos de uso, representados además mediante diagramas UML de casos de uso, actividad, estados y secuencia. El diseño relacionó esas funciones con una arquitectura en capas, quince interfaces, nueve salidas y un modelo de datos de trece tablas documentado con su diagrama entidad-relación, su diagrama relacional y su diccionario. La matriz de trazabilidad confirma que cada requisito funcional cuenta con un caso de uso, una interfaz y las tablas que lo soportan.
+98
+
+Capítulo IV. Resultados
+
+4.1 Sistema definido Como resultado del análisis y diseño se definió un sistema web de reclutamiento para la
+Universidad Capital de Estudios Superiores que cubre el recorrido completo de la revisión inicial de candidatos: un postulante puede crear su cuenta, responder el cuestionario base, consultar las vacantes de cada módulo, postularse, presentar la evaluación con su evidencia y consultar el resultado; y Recursos Humanos puede administrar el catálogo de módulos, vacantes y evaluaciones, revisar cada intento con sus respuestas, evidencias e indicadores, y registrar su decisión con observaciones.
+Los cambios que el sistema diseñado introduce respecto del proceso anterior se resumen en la tabla siguiente.
+
+Tabla 53 Comparación del proceso anterior y del proceso propuesto
+
+Actividad Difusión de vacantes
+Contacto inicial
+Información previa a la entrevista Conservación de la información
+
+Proceso anterior
+Publicaciones en redes sociales.
+Llamadas y visitas a la institución.
+Currículum entregado en persona.
+Archivos y mensajes dispersos.
+
+Seguimiento Configuración
+
+Contacto individual con Recursos Humanos.
+No aplica.
+
+Nota. Elaboración propia.
+
+Proceso propuesto con el sistema
+Catálogo en línea organizado por módulos; puede compartirse un enlace en redes sociales.
+Registro en línea con validación de CURP.
+Cuestionario base, evaluación por vacante y evidencias.
+Base de datos relacional que vincula persona, postulación, intento, respuestas, evidencias y revisión.
+Consulta del estado, la decisión y las notas desde el perfil.
+Panel administrativo para módulos, vacantes, evaluaciones y preguntas.
+
+99
+
+4.2 Resultados por objetivo específico
+
+Tabla 54 Resultados obtenidos por objetivo específico
+
+Objetivo Resultado
+
+Ubicación
+
+OE-01 Descripción del proceso anterior, de sus actores y de cinco necesidades Capítulo I y
+
+de Recursos Humanos.
+
+sección 3.2.1
+
+OE-02
+
+Documento de concepto de operaciones (IEEE 1362) y especificación Secciones 3.2.3 y de requisitos (IEEE 830) con 18 requisitos funcionales, 7 no funcionales 3.2.4 y 12 reglas de negocio.
+
+OE-03
+
+Diagrama de casos de uso, 14 especificaciones de casos de uso, diagrama de actividad, diagrama de estados y dos diagramas de secuencia.
+
+Secciones 3.2.5, 3.2.6 y 3.3.1
+
+OE-04 Arquitectura lógica en capas, diagrama de despliegue y descripción de Sección 3.3.1 los mecanismos de seguridad.
+
+OE-05 Diagrama entidad-relación, diagrama relacional y diccionario de datos Sección 3.4 de 13 tablas, 72 campos y 17 claves foráneas.
+
+OE-06 Mapa de navegación, 15 interfaces, 9 salidas y matrices de trazabilidad. Secciones 3.3.2, 3.3.3 y 3.5
+
+Nota. Elaboración propia.
+
+4.3 Verificación de la hipótesis
+
+Para contrastar la hipótesis planteada en la sección 1.6 se definieron tres indicadores, uno
+
+por cada variable dependiente.
+
+Tabla 55 Indicadores para la verificación de la hipótesis
+
+Indicador
+I-1. Centralización de la información
+
+Método de medición
+
+Proceso anterior
+
+Con el sistema
+
+Lista de verificación de cinco datos por candidatura (vacante, evaluación, respuestas, evidencias y decisión) consultables en un solo medio.
+
+0 de 5 en un solo medio: datos distribuidos en redes sociales, currículum, archivos y mensajes; no existían evaluaciones ni evidencias.
+
+5 de 5 en la revisión del intento (UI-15).
+
+Criterio de aceptación
+Los cinco datos se consultan desde el sistema.
+
+100
+
+Indicador
+
+Método de medición
+
+Proceso anterior
+
+I-2. Tiempo de revisión inicial por candidato
+
+Tiempo promedio, en minutos, que Recursos Humanos dedica a revisar la información previa de una muestra de candidaturas.
+
+Por medir en la implementación.
+
+I-3. Satisfacción Cuestionario de
+
+No aplica
+
+de Recursos
+
+escala Likert de 1 a 5
+
+Humanos
+
+(Anexo B).
+
+Con el sistema Por medir en la implementación.
+Por medir en la implementación.
+
+Nota. Elaboración propia con base en Hernández Sampieri et al. (2014).
+
+Criterio de aceptación
+El tiempo con el sistema es menor que el del proceso anterior.
+Promedio igual o mayor a 4.
+
+El indicador I-1 puede verificarse directamente con el diseño de datos: el modelo relacional
+
+vincula cada postulación con su vacante, sus intentos, sus respuestas, sus evidencias y su revisión,
+
+y la interfaz UI-15 presenta esta información en una sola pantalla, mientras que en el proceso
+
+anterior se encontraba en archivos y mensajes. Los indicadores I-2 e I-3 requieren la participación
+
+de Recursos Humanos con candidaturas reales.
+
+Con base en lo anterior, el indicador I-1 cumple su criterio de aceptación: el diseño permite
+
+consultar desde una sola pantalla los cinco datos de cada candidatura, que en el proceso anterior
+
+se encontraban dispersos o no existían. Esto sustenta la primera parte de la hipótesis, referida a la
+
+centralización de la información.
+
+Los indicadores I-2 e I-3 dependen del uso del sistema con candidaturas reales, por lo que
+
+su medición corresponde a la etapa de implementación. Para ello se propone el siguiente
+
+procedimiento: (1) registrar, con apoyo de la responsable de Recursos Humanos, el tiempo
+
+promedio de revisión inicial de una muestra de candidaturas atendidas con el proceso anterior; (2)
+
+registrar el mismo tiempo para una muestra de candidaturas revisadas en el sistema durante su
+
+primer periodo de uso; (3) aplicar el cuestionario del Anexo B a la responsable del área al concluir
+
+ese periodo; y (4) comparar los resultados con los criterios de aceptación de la tabla anterior.
+
+101
+
+En consecuencia, a partir de los productos de análisis y diseño, la hipótesis H1 se considera parcialmente sustentada: se comprueba la centralización de la información, mientras que la reducción del tiempo de revisión y la satisfacción de Recursos Humanos quedan sujetas a la medición descrita. Si ambos indicadores cumplen sus criterios, se aceptará H1 y se rechazará H0. 4.4 Alcance de los resultados
+Los resultados corresponden a los productos de análisis y diseño documentados en este informe; la programación, las pruebas y la implementación se presentan en el reporte de desarrollo. Las funciones que se plantearon en las primeras reuniones y que no forman parte de esta versión (programación de entrevistas, carga de currículums, recuperación de contraseña, aprobación automática por promedio y una sola postulación activa por usuario) se registran en el Anexo A y se proponen como trabajo futuro. Los indicadores del cuestionario base son un apoyo para la revisión de Recursos Humanos y no sustituyen la entrevista ni constituyen un diagnóstico psicométrico.
+102
+
+Conclusiones generales
+El proyecto permitió transformar una necesidad concreta del área de Recursos Humanos de la Universidad Capital de Estudios Superiores en el análisis y diseño documentado de un sistema web de reclutamiento. El análisis del proceso anterior mostró que la difusión por redes sociales, el contacto telefónico y presencial, y el manejo de la información en archivos y mensajes concentraban la carga de trabajo en una sola persona y dificultaban el seguimiento de las candidaturas.
+La adopción del prototipado evolutivo resultó adecuada para un proyecto con requisitos generales al inicio y con un cliente disponible para revisar avances: las observaciones de Recursos Humanos sobre la valoración manual, el diseño visual y los cuestionarios se incorporaron en las iteraciones del prototipo.
+La especificación de requisitos con base en los estándares IEEE 1362 e IEEE 830, los catorce casos de uso y los diagramas UML organizaron con claridad las funciones de los dos actores del sistema. El diseño en capas definió una solución con autenticación, control de acceso por rol, validación de datos, protección de la CURP mediante HMAC y acceso controlado a las evidencias. El modelo de datos de trece tablas vincula cada candidatura con su vacante, sus intentos, sus respuestas, sus evidencias y su revisión, lo que atiende directamente el problema de la información dispersa.
+En cuanto a los objetivos, los seis objetivos específicos se cumplieron con los productos descritos en el capítulo IV y, con ello, el objetivo general de analizar y diseñar el sistema. La hipótesis se contrasta mediante los indicadores de centralización, tiempo de revisión y satisfacción definidos en la sección 4.3. El diseño comprueba la centralización de la información de cada candidatura, por lo que la hipótesis se considera parcialmente sustentada; la reducción del tiempo
+103
+
+de revisión y la satisfacción de Recursos Humanos se verificarán con la medición propuesta durante la implementación del sistema.
+Finalmente, la documentación obtenida constituye una referencia técnica que permite a la institución mantener el sistema, capacitar a nuevos usuarios y planear las funciones de versiones posteriores.
+104
+
+Trabajo futuro
+Con base en el análisis realizado se proponen las siguientes mejoras para versiones posteriores del sistema, que deberán validarse con Recursos Humanos antes de incorporarse como nuevos requisitos:
+1. Programación de entrevistas: agendar, reprogramar y cancelar entrevistas desde el sistema para los candidatos aprobados en la revisión inicial.
+2. Carga de currículum: permitir que el postulante adjunte su currículum en cada postulación.
+3. Recuperación de contraseña: restablecimiento de la contraseña mediante un enlace enviado por correo electrónico.
+4. Calificación de evaluaciones de conocimientos: calcular el porcentaje de aciertos comparando las respuestas con la respuesta de referencia de cada pregunta, separado de los indicadores del cuestionario base.
+5. Coherencia entre instrucciones y archivos: configurar por actividad los formatos de archivo permitidos y su tamaño máximo, para que coincidan con la entrega esperada.
+6. Versiones de evaluaciones: conservar el contenido que respondió cada postulante aunque las preguntas se modifiquen posteriormente.
+7. Etiquetas en español y contadores claros: unificar las etiquetas de estado visibles y distinguir el estado de la postulación, del intento y de la decisión.
+8. Una postulación activa por vacante: agregar una restricción de unicidad del par usuariovacante.
+9. Reportes exportables: generar reportes de candidatos por vacante en PDF o Excel. 10. Notificaciones por correo: avisar al postulante cuando su evaluación haya sido revisada. 11. Evaluación de usabilidad: revisión de accesibilidad y pruebas de usabilidad del diseño
+con postulantes reales.
+105
+
+Competencias desarrolladas
+Análisis de necesidades. El proyecto permitió organizar una situación institucional a partir de sus actividades, actores e información, y transformar las necesidades expresadas por el cliente en una especificación de requisitos comprensible.
+Comunicación con el cliente. Las reuniones con la responsable de Recursos Humanos requirieron escuchar sus actividades, aclarar expectativas, presentar avances y recibir observaciones, así como traducir esa información a un lenguaje técnico y viceversa.
+Gestión del análisis y diseño. La aplicación del prototipado evolutivo implicó planear iteraciones de revisión, priorizar funciones y controlar el alcance en cada reunión con el cliente.
+Seguridad desde el diseño. La definición de la autenticación, la autorización por rol, la validación de datos y la protección de la CURP mediante HMAC permitió incorporar la seguridad como parte del diseño del sistema.
+Modelado de sistemas. La elaboración de casos de uso y diagramas UML fortaleció la capacidad de separar condiciones, acciones, excepciones y resultados, y de representar el comportamiento del sistema desde distintas perspectivas.
+Diseño de bases de datos. El modelo entidad-relación, el modelo relacional y el diccionario requirieron definir claves, cardinalidades, nulabilidad, restricciones de unicidad y reglas de eliminación.
+Diseño de interfaces. La organización de pantallas y salidas permitió aplicar principios de usabilidad y relacionar los controles de la interfaz con las tareas de cada usuario.
+Documentación técnica. La integración del informe requirió aplicar estándares de documentación (IEEE 1362, IEEE 830 y UML), mantener la trazabilidad entre secciones y citar fuentes con el formato APA.
+106
+
+Fuentes de información
+Bass, L., Clements, P., y Kazman, R. (2012). Software architecture in practice (3.ª ed.). Addison-Wesley.
+Boehm, B. W. (1988). A spiral model of software development and enhancement. Computer, 21(5), 61­72. https://doi.org/10.1109/2.59
+Chen, P. P. (1976). The entity-relationship model: Toward a unified view of data. ACM Transactions on Database Systems, 1(1), 9­36. https://doi.org/10.1145/320434.320440
+Chiavenato, I. (2011). Administración de recursos humanos: El capital humano de las organizaciones (9.ª ed.). McGraw-Hill.
+CIPD. (2026a, 28 de mayo). Recruitment: An introduction. https://www.cipd.org/en/knowledge/factsheets/recruitment-factsheet/
+CIPD. (2026b, 22 de septiembre). Selection methods. https://www.cipd.org/en/knowledge/factsheets/selection-factsheet/
+Codd, E. F. (1970). A relational model of data for large shared data banks. Communications of the ACM, 13(6), 377­387. https://doi.org/10.1145/362384.362685
+Dessler, G. (2015). Administración de recursos humanos (14.ª ed.). Pearson Educación. Elmasri, R., y Navathe, S. B. (2007). Fundamentos de sistemas de bases de datos (5.ª ed.).
+Pearson Educación. Garrett, J. J. (2011). The elements of user experience: User-centered design for the web and
+beyond (2.ª ed.). New Riders. Hernández Sampieri, R., Fernández Collado, C., y Baptista Lucio, P. (2014). Metodología de la
+investigación (6.ª ed.). McGraw-Hill.
+107
+
+IBM. (s. f.-a). Creating models and diagrams to describe a system or solution architecture. https://www.ibm.com/docs/en/dma?topic=models-creating-diagrams
+IBM. (s. f.-b). Use-case diagrams in UML modeling. https://www.ibm.com/docs/en/dma?topic=diagrams-use-case
+IEEE. (1998a). IEEE recommended practice for software requirements specifications (IEEE Std 830-1998). https://doi.org/10.1109/IEEESTD.1998.88286
+IEEE. (1998b). IEEE guide for information technology: System definition: Concept of operations (ConOps) document (IEEE Std 1362-1998). https://doi.org/10.1109/IEEESTD.1998.89424
+International Organization for Standardization. (2019). Ergonomics of human-system interaction: Part 210: Human-centred design for interactive systems (ISO 9241-210:2019).
+Kendall, K. E., y Kendall, J. E. (2011). Análisis y diseño de sistemas (8.ª ed.). Pearson Educación.
+Krawczyk, H., Bellare, M., y Canetti, R. (1997). HMAC: Keyed-hashing for message authentication (RFC 2104). RFC Editor. https://www.rfc-editor.org/rfc/rfc2104
+Laudon, K. C., y Laudon, J. P. (2016). Sistemas de información gerencial (14.ª ed.). Pearson Educación.
+MDN contributors. (2026a, 10 de septiembre). Client-server overview. MDN Web Docs. https://developer.mozilla.org/en-US/docs/Learn_web_development/Extensions/Serverside/First_steps/Client-Server_overview
+MDN contributors. (2026b, 20 de julio). How the web works. MDN Web Docs. https://developer.mozilla.org/enUS/docs/Learn_web_development/Getting_started/Web_standards/How_the_web_works
+108
+
+Mohdzaini, H. (2023, 1 de marzo). Technology and data use in HR functions. CIPD. https://www.cipd.org/en/views-and-insights/thought-leadership/insight/technology-datahr-functions/
+Nielsen, J. (1994, 24 de abril). 10 usability heuristics for user interface design. Nielsen Norman Group. https://www.nngroup.com/articles/ten-usability-heuristics/
+Norman, D. (2013). The design of everyday things (ed. rev.). Basic Books. Object Management Group. (2017). OMG Unified Modeling Language (OMG UML), version
+2.5.1. https://www.omg.org/spec/UML/2.5.1 OWASP Foundation. (s. f.). Authorization cheat sheet. OWASP Cheat Sheet Series.
+https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html PostgreSQL Global Development Group. (s. f.). 5.5. Constraints. En PostgreSQL 18
+documentation. https://www.postgresql.org/docs/18/ddl-constraints.html Pressman, R. S., y Maxim, B. R. (2021). Ingeniería del software: Un enfoque práctico (9.ª ed.).
+McGraw-Hill. Raisinghani, M. S. (2025). Foundations of information systems. OpenStax.
+https://openstax.org/books/foundations-information-systems/pages/1-introduction Royce, W. W. (1970). Managing the development of large software systems. En Proceedings of
+IEEE WESCON (pp. 1­9). IEEE. Sommerville, I. (2011). Ingeniería de software (9.ª ed.). Pearson Educación. Washizaki, H. (Ed.). (2026). Guide to the software engineering body of knowledge (SWEBOK
+guide) (versión 4.0a). IEEE Computer Society. https://ieeecsmedia.computer.org/media/education/swebok/swebok-v4.pdf
+109
+
+World Wide Web Consortium. (2026, 27 de marzo). Forms tutorial. Web Accessibility Initiative. https://www.w3.org/WAI/tutorials/forms/
+110
+
+Glosario
+
+Tabla 56 Términos y abreviaturas
+
+Término ATS BaaS
+Bucket
+CASCADE
+CHECK Cuestionario base CURP ERS Evidencia
+FK HMAC
+HTTPS Intento
+JSONB Módulo PK Postulación RF / RNF / RN Rol
+SSR UML URL firmada
+UUID
+
+Definición Applicant Tracking System; sistema de seguimiento de candidatos. Backend as a Service; plataforma que ofrece autenticación, base de datos y almacenamiento como servicios. Contenedor de archivos en Supabase Storage. El sistema usa el contenedor evidences. Acción de una clave foránea que elimina los registros dependientes cuando se elimina el registro referenciado.
+Restricción que limita los valores permitidos en una columna. Instrumento común de veinte reactivos que el postulante debe completar antes de su primera postulación.
+Clave Única de Registro de Población; identificador personal en México. Especificación de requisitos de software. Archivo (imagen o PDF) que el postulante carga como parte de la sección práctica de una evaluación.
+Foreign key; clave foránea. Hash-based Message Authentication Code; código que combina una función hash con una clave secreta.
+Protocolo de transferencia de hipertexto seguro. Participación de un postulante en una evaluación, con fecha de inicio, fecha límite, respuestas y estado.
+Tipo de dato de PostgreSQL que almacena estructuras JSON en formato binario.
+Agrupación configurable de vacantes, normalmente por departamento. Primary key; clave primaria.
+Registro que vincula a un postulante con una vacante. Requisito funcional / requisito no funcional / regla de negocio. Conjunto de permisos asignado a una cuenta: user (postulante) o admin (administrador).
+Server-Side Rendering; generación del contenido de la página en el servidor. Unified Modeling Language; Lenguaje Unificado de Modelado. Dirección temporal que permite descargar un archivo privado durante un tiempo limitado.
+Identificador único universal utilizado como clave primaria en las tablas.
+
+111
+
+Término
+Estados de vacante
+
+Definición open (abierta), closed (cerrada) y draft (borrador).
+
+Estados de intento
+
+IN_PROGRESS (en curso), SUBMITTED (enviado), UNDER_REVIEW (en revisión) y COMPLETED (revisado).
+
+Decisiones
+
+APPROVED (aprobado), REJECTED (rechazado) e INFO_REQUIRED (se requiere información adicional).
+
+Nota. Elaboración propia.
+
+112
+
+Anexo A. Correspondencia entre las necesidades iniciales y el alcance del sistema
+
+La tabla siguiente relaciona las necesidades planteadas en las primeras reuniones con Recursos Humanos con el alcance final del sistema, resultado de las iteraciones del prototipo.
+
+Tabla 57 Necesidades iniciales y alcance documentado
+
+Tema Instrumentos comunes Aprobación automática Postulación activa Publicación
+Evidencias
+Entrevistas
+Currículum
+Cierre
+Contraseña
+
+Descripción inicial
+
+Alcance del sistema
+
+Dos cuestionarios incorporados a Instrumento base previo a la postulación y
+
+todas las vacantes.
+
+evaluaciones asociadas a vacantes.
+
+Media sobre diez y umbral de seis.
+
+Indicador de respuestas Likert y decisión administrativa separada.
+
+Una sola solicitud activa e intento Fuera del alcance; propuesto como trabajo
+
+único.
+
+futuro.
+
+Publicación directa con edición bloqueada.
+
+Estados open, closed y draft; edición administrativa disponible.
+
+Archivos o enlaces según lo solicitado.
+
+Carga de imágenes y PDF; la entrega por enlace se propone como trabajo futuro.
+
+Programación, cancelación y reprogramación.
+
+Fuera del alcance; propuesto como trabajo futuro.
+
+Carga por cada solicitud aceptada. Fuera del alcance; propuesto como trabajo futuro.
+
+Rechazo masivo y cancelación de Cambio de disponibilidad de la vacante para
+
+entrevistas.
+
+nuevas postulaciones.
+
+Restablecimiento mediante enlace Fuera del alcance; propuesto como trabajo
+
+por correo.
+
+futuro.
+
+113
+
+Anexo B. Cuestionario de satisfacción para Recursos Humanos
+
+El siguiente instrumento se propone para medir el indicador I-3 de la verificación de la hipótesis. Cada afirmación se responde con una escala de 1 (totalmente en desacuerdo) a 5 (totalmente de acuerdo).
+
+Tabla 58 Cuestionario de satisfacción
+
+Núm. Afirmación
+
+12345
+
+1
+
+El sistema me permite publicar y actualizar vacantes con facilidad.
+
+2
+
+La organización de vacantes por módulos es adecuada para la institución.
+
+3
+
+Puedo configurar las evaluaciones y sus preguntas sin dificultad.
+
+4
+
+La información de cada candidato (respuestas, evidencias e indicadores) se
+
+encuentra en un solo lugar.
+
+5
+
+El sistema me permite revisar a los candidatos en menos tiempo que el
+
+proceso anterior.
+
+6
+
+Llego a la entrevista con más información sobre el candidato que antes.
+
+7
+
+Registrar decisiones y observaciones es sencillo.
+
+8
+
+El diseño visual del sistema corresponde a la imagen de la institución.
+
+9
+
+Los mensajes del sistema son claros y me indican qué hacer.
+
+10 Recomendaría seguir utilizando el sistema en el proceso de reclutamiento.
+
+Nota. Elaboración propia. Se sugiere agregar una pregunta abierta para comentarios y sugerencias.
+
+114
+
+
