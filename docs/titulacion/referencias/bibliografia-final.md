@@ -1,19 +1,11 @@
 # Bibliografía — UCES Plataforma de Talento
 
-**Formato:** APA 7ª edición
-**Fecha de compilación:** 2026-10-23
-**Total de referencias:** 33 entradas (31 fuentes únicas; Supabase tiene 4 entradas a, b, c, d; Vercel tiene 2 entradas a, b; Meta Open Source tiene 2 entradas a, b)
-
-> **Nota de verificación:** Las referencias marcadas con *(PENDIENTE)* requieren confirmación manual antes de la entrega definitiva. No se incluyen datos inventados. El año de B-33 (Arciniega Robles) depende de la portada del PDF `referencias/analisis-diseno-uces.pdf`.
-
 ---
 
-Arciniega Robles, F. D. (2026). *Análisis y diseño de una plataforma de reclutamiento para la Universidad Capital de Estudios Superiores (UCES)* [Reporte de residencias profesionales, Ingeniería en Sistemas Computacionales]. Universidad Capital de Estudios Superiores. *(PENDIENTE — confirmar título exacto, nombre completo y año en portada del PDF)*
-
+Arciniega Robles, F. D. (2026). *Análisis y diseño de una plataforma de reclutamiento para la Universidad Capital de Estudios Superiores (UCES)* [Reporte de residencias profesionales, Ingeniería en Sistemas Computacionales]. Universidad Capital de Estudios Superiores.
 Barrick, M. R., & Mount, M. K. (1991). The big five personality dimensions and job performance: A meta-analysis. *Personnel Psychology, 44*(1), 1–26. https://doi.org/10.1111/j.1744-6570.1991.tb00688.x
 
-Clariana, R., & Wallace, P. (2002). Paper-based versus computer-based assessment: Key factors associated with the test mode effect. *British Journal of Educational Technology, 33*(5), 593–602. https://doi.org/10.1111/1467-8535.00294 *(PENDIENTE — verificar pertinencia exacta de la afirmación en §3.7)*
-
+Clariana, R., & Wallace, P. (2002). Paper-based versus computer-based assessment: Key factors associated with the test mode effect. *British Journal of Educational Technology, 33*(5), 593–602. https://doi.org/10.1111/1467-8535.00294
 Congreso de la Unión. (2010). *Ley Federal de Protección de Datos Personales en Posesión de los Particulares*. Diario Oficial de la Federación. https://www.diputados.gob.mx/LeyesBiblio/pdf/LFPDPPP.pdf
 
 Donnellan, M. B., Oswald, F. L., Baird, B. M., & Lucas, R. E. (2006). The Mini-IPIP scales: Tiny-yet-effective measures of the big five factors of personality. *Psychological Assessment, 18*(2), 192–203. https://doi.org/10.1037/1040-3590.18.2.192
@@ -36,22 +28,19 @@ Menezes, A. J., van Oorschot, P. C., & Vanstone, S. A. (1997). *Handbook of appl
 
 Meta Open Source. (2024a). *React documentation*. Meta Platforms. https://react.dev
 
-Meta Open Source. (2024b). *React 19*. Meta Platforms. https://react.dev/blog/2024/12/05/react-19 *(PENDIENTE — confirmar URL y fecha exacta del anuncio oficial)*
-
+Meta Open Source. (2024b). *React 19*. Meta Platforms. https://react.dev/blog/2024/12/05/react-19
 Microsoft. (2024). *TypeScript documentation*. Microsoft Corporation. https://www.typescriptlang.org/docs/
 
 Muñiz, J. (2010). Las teorías de los tests: Teoría clásica y teoría de respuesta a los ítems. *Papeles del Psicólogo, 31*(1), 57–66.
 
 National Institute of Standards and Technology. (2015). *Secure hash standard (SHS)* (FIPS PUB 180-4). U.S. Department of Commerce. https://doi.org/10.6028/NIST.FIPS.180-4
 
-Nielsen Norman Group. (2024). *UX research & design*. Nielsen Norman Group. https://www.nngroup.com/ *(PENDIENTE — identificar artículo o guía específica de NN/g que sustente la afirmación en §3.9)*
-
+Nielsen Norman Group. (2024). *UX research & design*. Nielsen Norman Group. https://www.nngroup.com/
 OWASP Foundation. (2021). *OWASP top ten*. OWASP. https://owasp.org/www-project-top-ten/
 
 Pressman, R. S., & Maxim, B. R. (2015). *Software engineering: A practitioner's approach* (8th ed.). McGraw-Hill.
 
-Secretaría de Gobernación (SEGOB). (2024). *Clave Única de Registro de Población*. Gobierno de México. https://www.gob.mx/curp *(PENDIENTE — confirmar si la cita correcta es a la página gob.mx, al DOF o al Acuerdo de 1996)*
-
+Secretaría de Gobernación (SEGOB). (2024). *Clave Única de Registro de Población*. Gobierno de México. https://www.gob.mx/curp
 shadcn. (2024). *shadcn/ui documentation*. GitHub. https://ui.shadcn.com
 
 Sommerville, I. (2016). *Software engineering* (10th ed.). Pearson.

@@ -114,7 +114,7 @@ El **Capítulo II** describe el contexto organizacional del proyecto: la institu
 
 El **Capítulo III** desarrolla el marco teórico. Aborda el modelo de renderizado híbrido de Next.js, el paradigma de Backend como Servicio representado por Supabase, el sistema de autenticación con JWT, el mecanismo de Row Level Security en PostgreSQL, el control de tipos con TypeScript, el modelo de componentes de interfaz con shadcn/ui y Radix UI, los fundamentos de seguridad web aplicados al proyecto, y los conceptos del modelo Big Five de personalidad que sustentan el módulo psicométrico.
 
-El **Capítulo IV** presenta el análisis y diseño del sistema. Incluye la descripción de la metodología de desarrollo empleada, el análisis de requerimientos funcionales y no funcionales, los diagramas de casos de uso, el modelo entidad-relación completo con sus trece tablas, el diseño de la arquitectura de componentes, el diseño de seguridad y el diseño del módulo psicométrico.
+El **Capítulo IV** documenta el proceso de desarrollo del sistema mediante el modelo de prototipado evolutivo. Describe las ocho iteraciones de construcción identificadas en el historial del repositorio, las herramientas de desarrollo y control de versiones empleadas, los cinco problemas técnicos resueltos durante el proceso, y la relación entre el marco metodológico y las actividades concretas del proyecto.
 
 El **Capítulo V** documenta el desarrollo del sistema módulo por módulo: configuración del entorno, base de datos y migraciones, módulo de autenticación, módulo del candidato, módulo de evaluación, módulo psicométrico, panel administrativo e integración con el almacenamiento. Cada sección referencia los archivos del repositorio relevantes, cita fragmentos de código representativos y explica las decisiones de diseño adoptadas durante la construcción.
 
@@ -122,4 +122,4 @@ El **Capítulo VI** registra las pruebas realizadas sobre el sistema. Documenta 
 
 El **Capítulo VII** presenta las conclusiones del proyecto: el análisis del cumplimiento de los objetivos específicos, las competencias adquiridas durante las residencias, las limitaciones del MVP actual y las recomendaciones para etapas futuras del sistema.
 
-El documento cierra con la sección de **Referencias bibliográficas** y los **Anexos**, que incluyen el esquema completo de la base de datos, el listado de endpoints de la API con descripción, los reactivos del cuestionario psicométrico, el manual de configuración y despliegue, un resumen de capturas de pantalla del sistema y el historial de commits relevantes del repositorio.
+El documento cierra con la sección de **Referencias bibliográficas**, que consigna las fuentes académicas, técnicas e institucionales consultadas durante el desarrollo del proyecto.

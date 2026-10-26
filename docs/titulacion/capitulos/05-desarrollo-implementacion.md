@@ -59,8 +59,6 @@ La arquitectura sigue el patrón de tres capas adaptado a la plataforma Next.js/
 
 **Figura 5.1 — Diagrama de arquitectura implementada**
 
-*(Véase la Figura 5.1 — diagrama vectorial generado para la versión v0.4 del reporte.)*
-
 ### 5.1.3 Componentes principales
 
 | Componente | Tipo | Responsabilidad | Archivo |
@@ -134,6 +132,8 @@ Este cliente usa la clave de rol de servicio (`SUPABASE_SERVICE_ROLE_KEY`), que 
 | `CURP_HASH_SECRET` | Sin prefijo | Solo servidor | Clave HMAC para protección de CURP |
 
 La convención de Next.js que distingue variables con `NEXT_PUBLIC_` (incluidas en el bundle del cliente) de las que no llevan ese prefijo (solo disponibles en el servidor) es el mecanismo que garantiza que las credenciales privilegiadas no lleguen al navegador.
+
+La Figura 5.23 ilustra la estructura relacional completa del sistema mediante el visualizador de esquema de Supabase Studio, confirmando las 13 tablas del modelo de datos y sus relaciones de clave foránea tal como se definen en `supabase/schema.sql`.
 
 ---
 
@@ -285,6 +285,8 @@ Esta verificación muestra al candidato si puede postularse a vacantes o si prim
 ### 5.5.1 Jerarquía módulos → vacantes (RF-04, RF-05)
 
 Las vacantes del sistema se organizan en una jerarquía de dos niveles: un módulo (área funcional) agrupa múltiples vacantes. El candidato navega primero a la lista de módulos en el panel, luego elige un módulo para ver sus vacantes, y finalmente accede al detalle de una vacante específica.
+
+> **Nota de diseño arquitectónico:** La plataforma no implementa una ruta de listado general de vacantes (`/vacantes`). El acceso se realiza exclusivamente mediante la URL directa `/vacantes/[id]` desde el módulo correspondiente. Esta decisión elimina una capa de indirección innecesaria en el flujo de postulación y simplifica la arquitectura del servidor al evitar paginación y filtrado global de vacantes, que quedó fuera del alcance del MVP.
 
 | Ruta | Componente | Datos que carga |
 |---|---|---|
@@ -715,6 +717,8 @@ admin.supabase.from("attempts")
 
 Esta consulta usa el join `!inner` para garantizar que solo se devuelvan intentos que tengan una postulación asociada. El panel ofrece filtros por `vacancy_id`, `user_id` y `status` que el administrador puede combinar para reducir la lista.
 
+La Figura 5.22 muestra el estado de la tabla `applications` en el entorno de demostración del sistema, con postulaciones pobladas en distintos estados operativos, evidenciando la correcta persistencia de la capa de datos.
+
 ### 5.9.7 Detalle de intento y consulta de respuestas y evidencias (RF-17)
 
 La página de detalle de intento (`/admin/attempts/[id]`) es la vista más completa del panel. Muestra en secciones diferenciadas:
@@ -780,6 +784,8 @@ Existe un endpoint de estadísticas por vacante en `GET /api/admin/vacancies/[id
 La autenticación del sistema se delega íntegramente a Supabase Auth, que implementa el estándar JWT (RFC 7519). Cuando un usuario inicia sesión mediante `signInWithPassword`, Supabase emite un token JWT firmado con RS256 que encapsula el identificador del usuario (`sub`), su correo y metadatos de la sesión. Este token se almacena en el almacenamiento local del navegador y tiene vigencia de una hora por defecto.
 
 La comunicación entre el servidor Next.js y Supabase Auth utiliza la clave de rol de servicio (`SUPABASE_SERVICE_ROLE_KEY`), que permite invocar `supabase.auth.getUser(token)` para validar el JWT sin necesidad de una sesión activa del servidor. Esta validación descifra y verifica la firma del token, devuelve el usuario si el token es válido, y retorna un error si el token está expirado, malformado o revocado.
+
+La Figura 5.24 muestra el panel de gestión de usuarios de Supabase Auth en el entorno de demostración, evidenciando que cada candidato y administrador posee una identidad única gestionada por el servicio externo. Los registros corresponden a usuarios de prueba creados mediante la Auth Admin API, con verificación de correo electrónico activada de forma programática.
 
 ### 5.10.2 Función `requireAdmin()` y protección de operaciones administrativas
 
@@ -939,6 +945,8 @@ Este mecanismo permite verificar si una CURP ya está registrada (comparando su 
 El bucket `evidences` de Supabase Storage se configura con `public = false` en `rls.sql`. Las políticas de Storage permiten subida solo al propietario y lectura al propietario o al administrador. El acceso a los archivos desde el panel administrativo se realiza exclusivamente mediante URLs firmadas con vigencia de 60 minutos, generadas por el cliente de servicio.
 
 La interfaz de evaluación usa `getPublicUrl()` para mostrar un enlace de previsualización al candidato mientras dura su sesión. Dado que el bucket es privado, esta URL no es accesible sin autenticación. Se reconoce como una limitación del MVP: el enlace de previsualización puede no funcionar correctamente si el navegador no incluye el JWT al intentar acceder al recurso.
+
+La Figura 5.25 presenta el bucket `evidences` en el panel de Supabase Storage, con configuración de acceso privado que impide la descarga directa de los archivos de evidencia sin las credenciales correspondientes.
 
 ### 5.10.10 Variables de entorno y separación de credenciales
 

@@ -1,0 +1,16 @@
+{
+  "name": "demo",
+  "version": "1.0.0",
+  "description": "**Proyecto:** UCES Plataforma de Talento — Tesis Moisés Medina Moreno (22010350)\r **Propósito:** Poblado de un proyecto Supabase DEMO aislado con datos ficticios para:\r   1. Obtener capturas de Supabase Studio para la tesis (Corte 8H)\r   2. Demonstrar flujos completos del sistema\r   3. Generar escenarios de revisión administrativa",
+  "type": "module",
+  "main": "06-crear-usuarios.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.118.0"
+  }
+}
